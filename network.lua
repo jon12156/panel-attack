@@ -86,7 +86,7 @@ local process_message = {
   I=function(s) P2.input_buffer = P2.input_buffer..s end,
   Q=function(s) P1.gpanel_buffer = P1.gpanel_buffer..s end,
   R=function(s) P2.gpanel_buffer = P2.gpanel_buffer..s end,
-  E=function(s) net_send("F"..s) end,
+  E=function(s) net_send("F"..s) connection_up_time = connection_up_time +1 end,  --connection_up_time counts "E" messages, not seconds
   J=function(s) this_frame_messages[#this_frame_messages+1] = json.decode(s) print("JSON LOL "..s)end}
 
 function network_init(ip)
@@ -111,14 +111,14 @@ function do_messages()
   while true do
     local typ, data = get_message()
     if typ then
-      if typ ~= "I" and type ~= "U" then
+      if typ ~= "I" and typ ~= "U" then
         print("Got message "..typ.." "..data)
       end
       process_message[typ](data)
 	  if typ == "U" then
 	    typ = "in_buf"
 	  end
-      if P1 and replay[P1.mode][typ] then
+      if P1 and P1.mode and replay[P1.mode][typ] then
         replay[P1.mode][typ]=replay[P1.mode][typ]..data
       end
     else

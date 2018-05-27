@@ -364,8 +364,10 @@ function Stack.render(self)
     gprint("Shake: "..self.shake_time, self.score_x, 190)
     gprint("Stop: "..self.stop_time, self.score_x, 205)
     gprint("Pre stop: "..self.pre_stop_time, self.score_x, 220)
-	if self.danger then gprint("danger", self.score_x,235) end
-	if self.danger_music then gprint("danger music", self.score_x, 250) end
+	if DEBUG_MODE and self.danger then gprint("danger", self.score_x,235) end
+	if DEBUG_MODE and self.danger_music then gprint("danger music", self.score_x, 250) end
+	if match_type then gprint(match_type, 375, 15) end
+	--gprint("Player"..self.player_number, self.score_x,265)
     --gprint("Panel buffer: "..#self.panel_buffer, self.score_x, 190)
     --[[local danger = {}
     for i=1,6 do
@@ -376,6 +378,16 @@ function Stack.render(self)
   self:draw_cards()
   self:render_cursor()
 end
+
+function scale_letterbox(width, height, w_ratio, h_ratio)
+  if height / h_ratio > width / w_ratio then
+    local scaled_height = h_ratio * width / w_ratio
+    return 0, (height - scaled_height) / 2, width, scaled_height
+  end
+  local scaled_width = w_ratio * height / h_ratio
+  return (width - scaled_width) / 2, 0, scaled_width, height
+end
+
 --[[
 void EnqueueConfetti(int x, int y)
 {
