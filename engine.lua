@@ -10,7 +10,7 @@ local garbage_bounce_time = #garbage_bounce_table
 local GARBAGE_DELAY = 52
 local clone_pool = {}
 
-Stack = class(function(s, which, mode, speed, difficulty)
+Stack = class(function(s, which, mode, speed, difficulty, player_number)
     s.character = uniformly(characters)
     s.max_health = 1
     s.mode = mode or "endless"
@@ -46,7 +46,6 @@ Stack = class(function(s, which, mode, speed, difficulty)
         s.NCOLORS = level_to_ncolors_vs[level]
       end
     end
-
     s.health = s.max_health
 
     s.garbage_cols = {{1,2,3,4,5,6,idx=1},
@@ -156,7 +155,8 @@ Stack = class(function(s, which, mode, speed, difficulty)
     s.card_q = Queue()
 
     s.which = which or 1 -- Pk.which == k
-
+	s.player_number = player_number or s.which --player number according to the multiplayer server, for game outcome reporting
+	
     s.shake_time = 0
 
     s.prev_states = {}
@@ -418,6 +418,12 @@ end
 function Stack.foreign_run(self)
   local times_to_run = min(string.len(self.input_buffer),
       self.max_runs_per_frame)
+  if self.play_to_end then
+	if string.len(self.input_buffer) < 4 then
+	  self.play_to_end = nil
+	  stop_sounds = true
+	end
+  end
   for i=1,times_to_run do
     self:update_cards()
     self.input_state = string.sub(self.input_buffer,1,1)
@@ -988,7 +994,7 @@ function Stack.PdP(self)
   
   --Play Sounds / music
   local music_mute = false
-  if (not music_mute) then
+  if not music_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
 	if (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
 		if not music_character_danger[winningPlayer().character]:isPlaying() then
 			music_character_normal[winningPlayer().character]:stop()
@@ -1001,7 +1007,7 @@ function Stack.PdP(self)
   end
   
   local SFX_mute = false
-  if (not SFX_mute) then
+  if not SFX_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
 	if SFX_Swap_Play == 1 then
 		SFX_Swap:stop()
 		SFX_Swap:play()
@@ -1071,7 +1077,11 @@ function Stack.PdP(self)
 		SFX_Pop_Play = nil
 		SFX_Garbage_Pop_Play = nil
 	end
-	if (self.game_over or (self.garbage_target and self.garbage_target.game_over)) then
+	if stop_sounds then
+	  love.audio.stop()
+	  stop_sounds = nil
+	end
+	if self.game_over or (self.garbage_target and self.garbage_target.game_over) then
 		SFX_GameOver_Play = 1
 	end
   end
