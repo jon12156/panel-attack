@@ -169,6 +169,13 @@ function deepcpy(tab)
   return ret
 end
 
+--Note: this round() doesn't work with negative numbers
+function round(positive_decimal_number, number_of_decimal_places)
+  if not number_of_decimal_places then
+    number_of_decimal_places = 0
+  end
+  return math.floor(positive_decimal_number*10^number_of_decimal_places+0.5)/10^number_of_decimal_places
+end
 -- Not actually for encoding/decoding byte streams as base64.
 -- Rather, it's for encoding streams of 6-bit symbols in printable characters.
 base64encode = procat("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890+/")

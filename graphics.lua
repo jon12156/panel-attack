@@ -37,21 +37,22 @@
 --int ConfettiBuf[6][2];
 --#define CONFETTI_STARTTIMER   40
 --#define CONFETTI_STARTRADIUS 150
+require("input")
 
 local floor = math.floor
 local ceil = math.ceil
 local garbage_match_time = #garbage_bounce_table
 
 function load_img(s)
-  s = love.image.newImageData(s)
-  local w, h = s:getWidth(), s:getHeight()
-  local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
-  local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
-  if wp ~= w or hp ~= h then
-    local padded = love.image.newImageData(wp, hp)
-    padded:paste(s, 0, 0)
-    s = padded
-  end
+  -- s = love.image.newImageData(s)
+  -- local w, h = s:getWidth(), s:getHeight()
+  -- local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
+  -- local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
+  -- if wp ~= w or hp ~= h then
+    -- local padded = love.image.newImageData(wp, hp)
+    -- padded:paste(s, 0, 0)
+    -- s = padded
+  -- end
   local ret = love.graphics.newImage(s)
   ret:setFilter("nearest","nearest")
   return ret
@@ -63,6 +64,22 @@ function draw(img, x, y, rot, x_scale,y_scale)
   y_scale = y_scale or 1
   gfx_q:push({love.graphics.draw, {img, x*GFX_SCALE, y*GFX_SCALE,
     rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
+end
+
+function menu_draw(img, x, y, rot, x_scale,y_scale)
+  rot = rot or 0
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  gfx_q:push({love.graphics.draw, {img, x, y,
+    rot, x_scale, y_scale}})
+end
+
+function menu_drawq(img, quad, x, y, rot, x_scale,y_scale)
+  rot = rot or 0
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  gfx_q:push({love.graphics.draw, {img, quad, x, y,
+    rot, x_scale, y_scale}})
 end
 
 function grectangle(mode, x, y, w, h)
@@ -148,6 +165,34 @@ function graphics_init()
   for i=14,99 do
     IMG_cards[true][i] = load_img("assets/chain00.png")
   end
+  IMG_character_icons = {}
+  for k,name in ipairs(characters) do
+    IMG_character_icons[name] = load_img("assets/"..name.."/icon.png")
+  end
+  local MAX_SUPPORTED_PLAYERS = 2
+  IMG_char_sel_cursors = {}
+  for player_num=1,MAX_SUPPORTED_PLAYERS do
+    IMG_char_sel_cursors[player_num] = {}
+    for position_num=1,2 do
+      IMG_char_sel_cursors[player_num][position_num] = load_img("assets/char_sel_cur_"..player_num.."P_pos"..position_num..".png")
+    end
+  end
+  IMG_char_sel_cursor_halves = {left={}, right={}}
+  for player_num=1,MAX_SUPPORTED_PLAYERS do
+    IMG_char_sel_cursor_halves.left[player_num] = {}
+    for position_num=1,2 do
+      local cur_width, cur_height = IMG_char_sel_cursors[player_num][position_num]:getDimensions()
+      local half_width, half_height = cur_width/2, cur_height/2
+      IMG_char_sel_cursor_halves["left"][player_num][position_num] = love.graphics.newQuad(0,0,half_width,cur_height,cur_width, cur_height)
+    end
+    IMG_char_sel_cursor_halves.right[player_num] = {}
+    for position_num=1,2 do
+      local cur_width, cur_height = IMG_char_sel_cursors[player_num][position_num]:getDimensions()
+      local half_width, half_height = cur_width/2, cur_height/2
+      IMG_char_sel_cursor_halves.right[player_num][position_num] = love.graphics.newQuad(half_width,0,half_width,cur_height,cur_width, cur_height)
+    end
+  end
+  
 
   --for(a=0;a<2;a++) MrStopAni[a]=5;
   --for(a=2;a<5;a++) MrStopAni[a]=8;
@@ -201,7 +246,7 @@ end
 
 function Stack.render(self)
   local mx,my
-  if DEBUG_MODE then
+  if config.debug_mode then
     mx,my = love.mouse.getPosition()
     mx = mx / GFX_SCALE
     my = my / GFX_SCALE
@@ -284,8 +329,8 @@ function Stack.render(self)
               draw(imgs.flash, draw_x, draw_y)
             end
           end
-		  --this adds the drawing of state flags to garbage panels
-		  if DEBUG_MODE then
+          --this adds the drawing of state flags to garbage panels
+          if config.debug_mode then
             gprint(panel.state, draw_x*3, draw_y*3)
             if panel.match_anyway ~= nil then
               gprint(tostring(panel.match_anyway), draw_x*3, draw_y*3+10)
@@ -294,7 +339,7 @@ function Stack.render(self)
               end
             end
             gprint(panel.chaining and "chaining" or "nah", draw_x*3, draw_y*3+30)
-		  end
+          end
         else
           if panel.state == "matched" then
             local flash_time = self.FRAMECOUNT_MATCH - panel.timer
@@ -324,7 +369,7 @@ function Stack.render(self)
             draw_frame = 1
           end
           draw(IMG_panels[panel.color][draw_frame], draw_x, draw_y)
-          if DEBUG_MODE then
+          if config.debug_mode then
             gprint(panel.state, draw_x*3, draw_y*3)
             if panel.match_anyway ~= nil then
               gprint(tostring(panel.match_anyway), draw_x*3, draw_y*3+10)
@@ -336,7 +381,7 @@ function Stack.render(self)
           end
         end
       end
-      if DEBUG_MODE and mx >= draw_x and mx < draw_x + 16 and
+      if config.debug_mode and mx >= draw_x and mx < draw_x + 16 and
           my >= draw_y and my < draw_y + 16 then
         mouse_panel = {row, col, panel}
         draw(IMG_panels[4][1], draw_x+16/3, draw_y+16/3, 0, 0.33333333, 0.3333333)
@@ -364,8 +409,30 @@ function Stack.render(self)
     gprint("Shake: "..self.shake_time, self.score_x, 190)
     gprint("Stop: "..self.stop_time, self.score_x, 205)
     gprint("Pre stop: "..self.pre_stop_time, self.score_x, 220)
-	if self.danger then gprint("danger", self.score_x,235) end
-	if self.danger_music then gprint("danger music", self.score_x, 250) end
+    if config.debug_mode and self.danger then gprint("danger", self.score_x,235) end
+    if config.debug_mode and self.danger_music then gprint("danger music", self.score_x, 250) end
+    if config.debug_mode then
+      gprint("cleared: "..(self.panels_cleared or 0), self.score_x, 265)
+    end
+    if config.debug_mode then
+      gprint("metal q: "..(self.metal_panels_queued or 0), self.score_x, 280)
+    end
+    if config.debug_mode and self.input_state then
+      -- print(self.input_state)
+      -- print(base64decode[self.input_state])
+      local iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
+      -- print(tostring(raise))
+      local inputs_to_print = "inputs:"
+      if iraise then inputs_to_print = inputs_to_print.."\nraise" end --◄▲▼►
+      if iswap then inputs_to_print = inputs_to_print.."\nswap" end
+      if iup then inputs_to_print = inputs_to_print.."\nup" end
+      if idown then inputs_to_print = inputs_to_print.."\ndown" end
+      if ileft then inputs_to_print = inputs_to_print.."\nleft" end
+      if iright then inputs_to_print = inputs_to_print.."\nright" end
+      gprint(inputs_to_print, self.score_x, 295)
+    end
+    if match_type then gprint(match_type, 375, 15) end
+    --gprint("Player"..self.player_number, self.score_x,265)
     --gprint("Panel buffer: "..#self.panel_buffer, self.score_x, 190)
     --[[local danger = {}
     for i=1,6 do
@@ -376,6 +443,16 @@ function Stack.render(self)
   self:draw_cards()
   self:render_cursor()
 end
+
+function scale_letterbox(width, height, w_ratio, h_ratio)
+  if height / h_ratio > width / w_ratio then
+    local scaled_height = h_ratio * width / w_ratio
+    return 0, (height - scaled_height) / 2, width, scaled_height
+  end
+  local scaled_width = w_ratio * height / h_ratio
+  return (width - scaled_width) / 2, 0, scaled_width, height
+end
+
 --[[
 void EnqueueConfetti(int x, int y)
 {

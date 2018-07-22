@@ -1,3 +1,5 @@
+local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
+
 function write_key_file() pcall(function()
   local file = love.filesystem.newFile("keys.txt")
   file:open("w")
@@ -57,5 +59,28 @@ function write_replay_file() pcall(function()
   local file = love.filesystem.newFile("replay.txt")
   file:open("w")
   file:write(json.encode(replay))
+  file:close()
+end) end
+
+function write_replay_file(path, filename) pcall(function()
+  love.filesystem.createDirectory(path)
+  local file = love.filesystem.newFile(path.."/"..filename)
+  file:open("w")
+  file:write(json.encode(replay))
+  file:close()
+end) end
+
+function write_user_id_file() pcall(function()
+  love.filesystem.createDirectory("servers/"..connected_server_ip)
+  local file = love.filesystem.newFile("servers/"..connected_server_ip.."/user_id.txt")
+  file:open("w")
+  file:write(tostring(my_user_id))
+  file:close()
+end) end
+
+function read_user_id_file() pcall(function()
+  local file = love.filesystem.newFile("servers/"..connected_server_ip.."/user_id.txt")
+  file:open("r")
+  my_user_id = file:read()
   file:close()
 end) end
