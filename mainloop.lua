@@ -9,7 +9,7 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_local_vs_yourself_setup, main_local_vs_yourself,
   main_options, exit_options_menu, main_music_test
 
-VERSION = "030"
+VERSION = "036"
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
 local currently_spectating = false
@@ -50,6 +50,7 @@ function fmainloop()
   sound_init()
   while true do
     leftover_time = 1/120
+    leftover_time2 = 1/120
     consuming_timesteps = false
     func,arg = func(unpack(arg or {}))
     collectgarbage("collect")
@@ -150,8 +151,8 @@ do
         {"1P time attack", main_select_speed_99, {main_time_attack}},
         {"1P vs yourself", main_local_vs_yourself_setup},
         --{"2P vs online at burke.ro", main_net_vs_setup, {"burke.ro"}},
-        {"2P vs online at Jon's server", main_net_vs_setup, {"18.188.43.50"}},
-        --{"2P vs online at betaserver.panelattack.com", main_net_vs_setup, {"betaserver.panelattack.com"}},
+        --{"2P vs online at Jon's server", main_net_vs_setup, {"18.188.43.50"}},
+        {"2P vs online at betaserver.panelattack.com", main_net_vs_setup, {"betaserver.panelattack.com"}},
         --{"2P vs online (USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)", main_net_vs_setup, {"18.188.43.50"}},
         --{"This test build is for offline-use only"--[["2P vs online at Jon's server"]], main_select_mode},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
@@ -275,6 +276,7 @@ function main_endless(...)
   replay.gpan_buf = ""
   replay.mode = "endless"
   P1 = Stack(1, "endless", ...)
+  P1:set_foreign(false)
   P1.do_countdown = config.ready_countdown_1P or false
   replay.do_countdown = P1.do_countdown or false
   replay.speed = P1.speed
@@ -502,8 +504,8 @@ function main_character_select()
     local menu_width = Y*100
     local menu_height = X*80
     local spacing = 8
-    local x_padding = math.floor((819-menu_width)/2)
-    local y_padding = math.floor((612-menu_height)/2)
+    local x_padding = math.floor((default_width-menu_width)/2)
+    local y_padding = math.floor((default_height-menu_height)/2)
     set_color(unpack(colors.white))
     render_x = x_padding+(y-1)*100+spacing
     render_y = y_padding+(x-1)*100+spacing
@@ -647,10 +649,18 @@ function main_character_select()
           end
           P2.panel_buffer = fake_P2.panel_buffer
           P2.gpanel_buffer = fake_P2.gpanel_buffer
-          P1.garbage_target = P2
-          P2.garbage_target = P1
           P2.pos_x = 172
           P2.score_x = 410
+          if currently_spectating then
+            P1:set_foreign(true)
+          else
+            P1:set_foreign(false)
+          end
+          P2:set_foreign(true)
+          P1:set_garbage_target(P2)
+          P2:set_garbage_target(P1)
+          P1.telegraph:subscribe(P2.incoming_telegraph)
+          P2.telegraph:subscribe(P1.incoming_telegraph)
           replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
                       P1_level=P1.level,P2_level=P2.level,
                       P1_name=my_name, P2_name=op_name,
@@ -873,7 +883,9 @@ function main_character_select()
     end
     if my_state.ready and character_select_mode == "1p_vs_yourself" then
       P1 = Stack(1, "vs", my_state.level, my_state.character)
-      P1.garbage_target = P1
+      P1:set_foreign(false)
+      P1:set_garbage_target(P1)
+      --P1.telegraph:subscribe(P1.incoming_telegraph)
       make_local_panels(P1, "000000")
       make_local_gpanels(P1, "000000")
       P1:starting_state()
@@ -1195,13 +1207,19 @@ function main_net_vs_setup(ip)
   if currently_spectating then
     P1.panel_buffer = fake_P1.panel_buffer
     P1.gpanel_buffer = fake_P1.gpanel_buffer
+    P1:set_foreign(true)
+  else
+    P1:set_foreign(false)
   end
+  P2:set_foreign(true)
   P2.panel_buffer = fake_P2.panel_buffer
   P2.gpanel_buffer = fake_P2.gpanel_buffer
-  P1.garbage_target = P2
-  P2.garbage_target = P1
   P2.pos_x = 172
   P2.score_x = 410
+  P1:set_garbage_target(P2)
+  P2:set_garbage_target(P1)
+  P1.telegraph:subscribe(P2.incoming_telegraph)
+  P2.telegraph:subscribe(P1.incoming_telegraph)
   replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
               P1_level=P1_level,P2_level=P2_level,
               ranked=false, P1_name=my_name, P2_name=op_name,
@@ -1276,6 +1294,8 @@ function main_net_vs()
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       P1:render()
       P2:render()
+      P1:render_telegraph()
+      P2:render_telegraph()
       wait()
       if currently_spectating and this_frame_keys["escape"] then
         print("spectator pressed escape during a game")
@@ -1290,12 +1310,15 @@ function main_net_vs()
     
     print(P1.CLOCK, P2.CLOCK)
     if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
-      if not P1.game_over then
+      if not (P1.game_over and P1.guesses == "") then
         if currently_spectating then
           P1:foreign_run()
         else
           P1:local_run() 
         end
+      end
+      if not (P2.game_over and P2.guesses == "") then
+        P2:foreign_run()
       end
     else
       variable_step(function()
@@ -1306,10 +1329,10 @@ function main_net_vs()
             P1:local_run() 
           end
         end
+        if not P2.game_over then
+          P2:foreign_run()
+        end
       end)
-    end
-    if not P2.game_over then
-      P2:foreign_run()
     end
     local outcome_claim = nil
     if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
@@ -1395,16 +1418,16 @@ main_local_vs_setup = multi_func(function()
   to_print = "P1 level: "..maybe[1].."\nP2 level: "..(maybe[2])
   P1 = Stack(1, "vs", chosen[1])
   P2 = Stack(2, "vs", chosen[2])
-  P1.garbage_target = P2
-  P2.garbage_target = P1
   P2.pos_x = 172
   P2.score_x = 410
-  -- TODO: this does not correctly implement starting configurations.
-  -- Starting configurations should be identical for visible blocks, and
-  -- they should not be completely flat.
-  --
-  -- In general the block-generation logic should be the same as the server's, so
-  -- maybe there should be only one implementation.
+  P1:set_foreign(false)
+  P2:set_foreign(false)
+  P1:set_garbage_target(P2)
+  P2:set_garbage_target(P1)
+  P1.telegraph:subscribe(P2.incoming_telegraph)
+  P2.telegraph:subscribe(P1.incoming_telegraph)
+
+
   make_local_panels(P1, "000000")
   make_local_gpanels(P1, "000000")
   make_local_panels(P2, "000000")
@@ -1425,6 +1448,8 @@ function main_local_vs()
   while true do
     P1:render()
     P2:render()
+    P1:render_telegraph()
+    P2:render_telegraph()
     wait()
     variable_step(function()
         if not P1.game_over and not P2.game_over then
@@ -1460,6 +1485,7 @@ function main_local_vs_yourself()
   local end_text = nil
   while true do
     P1:render()
+    P1:render_telegraph()
     wait()
     variable_step(function()
         if not P1.game_over then
@@ -1481,10 +1507,10 @@ function main_replay_vs()
   P1.do_countdown = replay.do_countdown or false
   P2.do_countdown = replay.do_countdown or false
   P1.ice = true
-  P1.garbage_target = P2
-  P2.garbage_target = P1
   P2.pos_x = 172
   P2.score_x = 410
+  P1:set_garbage_target(P2)
+  P2:set_garbage_target(P1)
   P1.input_buffer = replay.in_buf
   P1.panel_buffer = replay.P
   P1.gpanel_buffer = replay.Q
@@ -1519,11 +1545,14 @@ function main_replay_vs()
     gprint(op_name or "", 410, op_name_y)
     P1:render()
     P2:render()
+    P1:render_telegraph()
+    P2:render_telegraph()
     if mouse_panel then
       local str = "Panel info:\nrow: "..mouse_panel[1].."\ncol: "..mouse_panel[2]
       for k,v in spairs(mouse_panel[3]) do
         str = str .. "\n".. k .. ": "..tostring(v)
       end
+      print("gprinting mouse_panel")
       gprint(str, 350, 400)
     end
     wait()

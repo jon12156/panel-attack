@@ -20,11 +20,28 @@ function load_img(path_and_name)
   return ret
 end
 
+function setScissor(x, y, width, height)
+  if x then
+    gfx_q:push({love.graphics.setScissor, {x*GFX_SCALE, y*GFX_SCALE, width*GFX_SCALE, height*GFX_SCALE}})
+  else
+    gfx_q:push({love.graphics.setScissor, {}})
+  end
+end
+
 function draw(img, x, y, rot, x_scale,y_scale)
   rot = rot or 0
   x_scale = x_scale or 1
   y_scale = y_scale or 1
   gfx_q:push({love.graphics.draw, {img, x*GFX_SCALE, y*GFX_SCALE,
+    rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
+end
+
+
+function drawQuad(img, quad, x, y, rot, x_scale,y_scale)
+  rot = rot or 0
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  gfx_q:push({love.graphics.draw, {img, quad, x*GFX_SCALE, y*GFX_SCALE,
     rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
 end
 
@@ -86,13 +103,57 @@ function graphics_init()
                     "doubleface", "filler1", "filler2", "flash",
                     "portrait"}
   IMG_garbage = {}
-  for _,key in ipairs(characters) do
+  IMG_particles = {}
+  particle_quads = {}
+  
+  texture = load_img("lakitu/particles.png")
+  local w = texture:getWidth()
+  local h = texture:getHeight()
+  local char_particles = {}
+    
+  particle_quads[1] = love.graphics.newQuad(0, 0, 48, 48, 256, 256)
+  particle_quads[2] = love.graphics.newQuad(48, 0, 48, 48, 256, 256)
+  particle_quads[3] = love.graphics.newQuad(96, 0, 48, 48, 256, 256)
+  particle_quads[4] = love.graphics.newQuad(144, 0, 48, 48, 256, 256)
+  particle_quads[5] = love.graphics.newQuad(0, 48, 48, 48, 256, 256)
+  particle_quads[6] = love.graphics.newQuad(48, 48, 48, 48, 256, 256)
+  particle_quads[7] = love.graphics.newQuad(96, 48, 48, 48, 256, 256)
+  particle_quads[8] = love.graphics.newQuad(144, 48, 48, 48, 256, 256)
+  particle_quads[9] = love.graphics.newQuad(0, 96, 48, 48, 256, 256)
+  particle_quads[10] = love.graphics.newQuad(48, 96, 48, 48, 256, 256)
+  particle_quads[11] = love.graphics.newQuad(96, 96, 48, 48, 256, 256)
+  particle_quads[12] = love.graphics.newQuad(144, 96, 48, 48, 256, 256)
+  particle_quads[13] = particle_quads[12]
+  particle_quads[14] = love.graphics.newQuad(0, 144, 48, 48, 256, 256)
+  particle_quads[15] = particle_quads[14]
+  particle_quads[16] = love.graphics.newQuad(48, 144, 48, 48, 256, 256)
+  particle_quads[17] = particle_quads[16]
+  particle_quads[18] = love.graphics.newQuad(96, 144, 48, 48, 256, 256)
+  particle_quads[19] = particle_quads[18]
+  particle_quads[20] = particle_quads[18]
+  particle_quads[21] = love.graphics.newQuad(144, 144, 48, 48, 256, 256)
+  particle_quads[22] = particle_quads[21]
+  particle_quads[23] = particle_quads[21]
+  particle_quads[24] = particle_quads[21]
+  IMG_telegraph_garbage = {} --values will be accessed by IMG_telegraph_garbage[garbage_height][garbage_width]
+  IMG_telegraph_attack = {}
+  for _,v in ipairs(characters) do
     local imgs = {}
-    IMG_garbage[key] = imgs
+    IMG_garbage[v] = imgs
     for _,part in ipairs(g_parts) do
-      imgs[part] = load_img(""..key.."/"..part..".png")
+      imgs[part] = load_img(""..v.."/"..part..".png")
     end
+    for h=1,14 do
+      IMG_telegraph_garbage[h] = {}
+      IMG_telegraph_garbage[h][6] = load_img("".."telegraph/"..h.."-tall.png")
+    end
+    for w=3,6 do
+      IMG_telegraph_garbage[1][w] = load_img("".."telegraph/"..w.."-wide.png")
+    end
+    IMG_telegraph_attack[v] = load_img(""..v.."/attack.png")
+    IMG_particles[v] = load_img(""..v.."/particles.png")
   end
+  IMG_telegraph_metal = load_img("telegraph/6-wide-metal.png")
 
   IMG_metal_flash = load_img("garbageflash.png")
   IMG_metal = load_img("metalmid.png")
@@ -199,6 +260,7 @@ function Stack.draw_cards(self)
 end
 
 function Stack.render(self)
+  setScissor(self.pos_x-100, self.pos_y-4, IMG_frame:getWidth()+300, IMG_frame:getHeight())
   local mx,my
   if config.debug_mode then
     mx,my = love.mouse.getPosition()
@@ -337,6 +399,7 @@ function Stack.render(self)
       end
       if config.debug_mode and mx >= draw_x and mx < draw_x + 16 and
           my >= draw_y and my < draw_y + 16 then
+        print("setting mouse_panel")
         mouse_panel = {row, col, panel}
         draw(IMG_panels[4][1], draw_x+16/3, draw_y+16/3, 0, 0.33333333, 0.3333333)
       end
@@ -399,6 +462,8 @@ function Stack.render(self)
   end
   self:draw_cards()
   self:render_cursor()
+  setScissor()
+  --self:render_gfx()
   if self.do_countdown then
     self:render_countdown()
   end
@@ -453,4 +518,312 @@ function Stack.render_countdown(self)
     end
   end
 end
+
+function Stack.render_gfx(self)
+  for key, gfx_item in pairs(self.gfx) do
+    drawQuad(IMG_particles[self.character], particle_quads[gfx_item["age"]], gfx_item["x"], gfx_item["y"])
+  end
+end
+
+function Stack.render_telegraph(self)
+  local telegraph_to_render 
+  
+  --if self.foreign then
+    --print("rendering foreign Player "..self.which.."'s self.garbage_target.telegraph")
+    --telegraph_to_render = self.garbage_target.telegraph
+  --else
+    --if self.garbage_target == self then
+      --print("rendering Player "..self.which.."'s self.telegraph")
+      telegraph_to_render = self.telegraph
+    --else
+      --print("rendering Player "..self.which.."'s self.incoming_telegraph")
+      --telegraph_to_render = self.incoming_telegraph
+      -- if self.which == 2 then
+        -- print("\ntelegraph_stoppers: "..json.encode(telegraph_to_render.stoppers))
+        -- print("telegraph garbage queue:")
+        -- print(telegraph_to_render.garbage_queue:to_string())
+        -- print("telegraph g_q chain in progress: "..tostring(true and telegraph_to_render.sender.chains.current))
+      -- end
+    --end
+  --end
+  -- print("\nrendering telegraph for player "..self.which)
+  -- if self.which == 1 then 
+    -- print(telegraph_to_render.garbage_queue:to_string())
+  -- end
+  local render_x = telegraph_to_render.pos_x
+  for frame_earned, attacks_this_frame in pairs(telegraph_to_render.attacks) do
+    -- print("frame_earned:")
+    -- print(frame_earned)
+    -- print(#card_animation)
+    -- print(self.CLOCK)
+    -- print(GARBAGE_TRANSIT_TIME)
+    local frames_since_earned = self.CLOCK - frame_earned
+    if frames_since_earned >= #card_animation and frames_since_earned <= GARBAGE_TRANSIT_TIME then
+      if frames_since_earned <= #card_animation then
+        --don't draw anything yet
+      elseif frames_since_earned < #card_animation + #telegraph_attack_animation_speed then
+        for _, attack in ipairs(attacks_this_frame) do
+          for _k, garbage_block in ipairs(attack.stuff_to_send) do
+            if not garbage_block.destination_x then 
+              print("ZZZZZZZ")
+              garbage_block.destination_x = telegraph_to_render.pos_x + TELEGRAPH_BLOCK_WIDTH * telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
+            end
+            if not garbage_block.x or not garbage_block.y then
+              garbage_block.x = (attack.origin_col-1) * 16 +telegraph_to_render.sender.pos_x
+              garbage_block.y = (11-attack.origin_row) * 16 + telegraph_to_render.sender.pos_y + telegraph_to_render.sender.displacement - card_animation[#card_animation]
+              garbage_block.origin_x = garbage_block.x
+              garbage_block.origin_y = garbage_block.y
+              garbage_block.direction = garbage_block.direction or sign(garbage_block.destination_x - garbage_block.origin_x) --should give -1 for left, or 1 for right
+              
+              for frame=1, frames_since_earned - #card_animation do
+                print("YYYYYYYYYYYY")
+                garbage_block.x = garbage_block.x + telegraph_attack_animation[garbage_block.direction][frame].dx
+                garbage_block.y = garbage_block.y + telegraph_attack_animation[garbage_block.direction][frame].dy
+              end
+            else
+              garbage_block.x = garbage_block.x + telegraph_attack_animation[garbage_block.direction][frames_since_earned-#card_animation].dx
+              garbage_block.y = garbage_block.y + telegraph_attack_animation[garbage_block.direction][frames_since_earned-#card_animation].dy
+            end
+            --print("DRAWING******")
+            --print(garbage_block.x..","..garbage_block.y)
+            draw(IMG_telegraph_attack[telegraph_to_render.sender.character], garbage_block.x, garbage_block.y)
+          end
+        end
+      elseif frames_since_earned >= #card_animation + #telegraph_attack_animation_speed and frames_since_earned < GARBAGE_TRANSIT_TIME - 1 then 
+        --move toward destination
+        for _, attack in ipairs(attacks_this_frame) do
+          for _k, garbage_block in ipairs(attack.stuff_to_send) do
+            --update destination
+            --garbage_block.frame_earned = frame_earned --this will be handy when we want to draw the telegraph garbage blocks
+            garbage_block.destination_x = render_x + TELEGRAPH_BLOCK_WIDTH * telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
+            garbage_block.destination_y = garbage_block.destination_y or telegraph_to_render.pos_y - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING 
+            
+            if not garbage_block.x or not garbage_block.y then
+              garbage_block.x = (attack.origin_col-1) * 16 +telegraph_to_render.sender.pos_x
+              garbage_block.y = (11-attack.origin_row) * 16 + telegraph_to_render.sender.pos_y + telegraph_to_render.sender.displacement - card_animation[#card_animation]
+              garbage_block.origin_x = garbage_block.x
+              garbage_block.origin_y = garbage_block.y
+              garbage_block.direction = garbage_block.direction or sign(garbage_block.destination_x - garbage_block.origin_x) --should give -1 for left, or 1 for right
+              
+              for frame=1, bound(1, frames_since_earned - #card_animation, #telegraph_attack_animation[garbage_block.direction]) do
+                print("YYYYYYYYYYYY")
+                garbage_block.x = garbage_block.x + telegraph_attack_animation[garbage_block.direction][frame].dx
+                garbage_block.y = garbage_block.y + telegraph_attack_animation[garbage_block.direction][frame].dy
+              end
+            end
+            
+            local distance_to_destination = math.sqrt(math.pow(garbage_block.x-garbage_block.destination_x,2)+math.pow(garbage_block.y-garbage_block.destination_y,2))
+            if frames_since_earned == #card_animation + #telegraph_attack_animation_speed then
+              garbage_block.speed = distance_to_destination / (GARBAGE_TRANSIT_TIME-frames_since_earned)
+            end
+
+            if distance_to_destination <= (garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED) then
+              --just move it to it's destination
+              garbage_block.x, garbage_block.y = garbage_block.destination_x, garbage_block.destination_y
+            else
+              garbage_block.x = garbage_block.x - ((garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED)*(garbage_block.x-garbage_block.destination_x))/distance_to_destination
+              garbage_block.y = garbage_block.y - ((garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED)*(garbage_block.y-garbage_block.destination_y))/distance_to_destination
+            end
+            if self.which == 1 then
+              print("rendering P1's telegraph's attack animation")
+            end
+            draw(IMG_telegraph_attack[telegraph_to_render.sender.character], garbage_block.x, garbage_block.y)
+          end
+        end
+      elseif frames_since_earned == GARBAGE_TRANSIT_TIME then
+        for _, attack in ipairs(attacks_this_frame) do
+          for _k, garbage_block in ipairs(attack.stuff_to_send) do
+            local last_chain_in_queue = telegraph_to_render.garbage_queue.chain_garbage[telegraph_to_render.garbage_queue.chain_garbage.last]
+            if garbage_block[4]--[[from_chain]] and last_chain_in_queue and garbage_block[2]--[[height]] == last_chain_in_queue[2]--[[height]] then
+              print("setting ghost_chain")
+              telegraph_to_render.garbage_queue.ghost_chain = garbage_block[2]--[[height]]
+            end
+              --draw(IMG_telegraph_attack[self.character], garbage_block.desination_x, garbage_block.destination_y)
+          end
+        end
+      end
+    end
+    --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)
+    -- print("BBBBBB")
+    -- print("telegraph_to_render.garbage_queue.ghost_chain: "..(telegraph_to_render.garbage_queue.ghost_chain or "nil"))
+    local g_queue_to_draw = telegraph_to_render.garbage_queue:mkcpy()
+    -- print("g_queue_to_draw.ghost_chain: "..(g_queue_to_draw.ghost_chain or "nil"))
+    local current_block = g_queue_to_draw:pop()
+    local draw_x = telegraph_to_render.pos_x
+    local draw_y = telegraph_to_render.pos_y
+    if telegraph_to_render.garbage_queue.ghost_chain then
+      draw(IMG_telegraph_garbage[telegraph_to_render.garbage_queue.ghost_chain][6], draw_x, draw_y)
+    end
+    while current_block do
+      --TODO: create a way to draw telegraphs from right to left
+      if self.CLOCK - current_block.frame_earned >= GARBAGE_TRANSIT_TIME then
+        if not current_block[3]--[[is_metal]] then
+          draw(IMG_telegraph_garbage[current_block[2]--[[height]]][current_block[1]--[[width]]], draw_x, draw_y)
+        else
+          draw(IMG_telegraph_metal, draw_x, draw_y)
+        end
+      end
+      draw_x = draw_x + TELEGRAPH_BLOCK_WIDTH
+      current_block = g_queue_to_draw:pop()
+    end
+  end
+
+end
+
+
+--[[void FadingPanels_1P(int draw_frame, int lightness)
+  int col, row, panel;
+  int drawpanel, draw_x, draw_y;
+
+  for(row=0;row<12;row++)
+  {
+    panel=row<<3;
+    for(col=0;col<6;col++)
+    {
+      drawpanel=P1StackPanels[panel];
+      if(drawpanel)
+      {
+        draw_x=self.pos_x+(col<<4);
+        draw_y=self.pos_y+self.displacement+(row<<4);
+        GrabRegion(draw_frame<<4,0,draw_frame<<4+15,15,draw_x,draw_y,
+          Graphics_Panels[drawpanel],screen);
+        if(lightness~=100)
+        {
+          SetLucent(lightness);
+          RectFill(draw_x,draw_y,draw_x+15,draw_y+15,0,screen);
+          SetLucent(0);
+        }
+      }
+      panel++;
+    }
+  }
+}--]]
+
+
+--[[
+void Render_Info_1P()
+{
+  int col, something, draw_x;
+  if(GameTimeRender)
+  {
+    GameTimeRender=0;
+    something=GameTime;
+    GameTimeDigits[0]=something/36000;
+    something=something%36000;
+    GameTimeDigits[1]=something/3600;
+    something=something%3600;
+
+    GameTimeDigits[2]=something/600;
+    something=something%600;
+    GameTimeDigits[3]=something/60;
+    something=something%60;
+
+    GameTimeDigits[4]=10;
+    GameTimeDigits[5]=something/10;
+    GameTimeDigits[6]=something%10;
+
+    RectFill(0,0,64,16,rgb(255,0,255),GameTimeDisplay);
+
+    if(GameTimeDigits[0]) draw_x=0;
+    else draw_x=0-8;
+    something=0;
+    for(col=0;col<2;col++)
+    {  if(GameTimeDigits[col])
+      {  GrabRegion(GameTimeDigits[col]<<3,0,(GameTimeDigits[col]<<3)+7,15,draw_x,0,Font_NumRed,GameTimeDisplay);
+        something=1;
+      }
+      else
+      {  if(something) GrabRegion(GameTimeDigits[col]<<3,0,(GameTimeDigits[col]<<3)+7,15,draw_x,0,Font_NumRed,GameTimeDisplay);
+      }
+      draw_x+=8;
+    }
+    if(something) GrabRegion(80,0,87,15,draw_x,0,Font_NumRed,GameTimeDisplay);
+    draw_x+=8;
+    if(something || GameTimeDigits[2])
+      GrabRegion(GameTimeDigits[2]<<3,0,(GameTimeDigits[2]<<3)+7,15,draw_x,0,Font_NumRed,GameTimeDisplay);
+    draw_x+=8;
+    for(col=3;col<7;col++)
+    {  GrabRegion(GameTimeDigits[col]<<3,0,(GameTimeDigits[col]<<3)+7,15,draw_x,0,Font_NumRed,GameTimeDisplay);
+      draw_x+=8;
+    }
+  }
+
+  TBlit(48,39,GameTimeDisplay,screen);
+
+
+
+  if(P1ScoreRender)
+  {
+    P1ScoreRender=0;
+    something=P1Score;
+    P1ScoreDigits[0]=something/10000;
+    something=something%10000;
+    P1ScoreDigits[1]=something/1000;
+    something=something%1000;
+    P1ScoreDigits[2]=something/100;
+    something=something%100;
+    P1ScoreDigits[3]=something/10;
+    P1ScoreDigits[4]=something%10;
+
+    RectFill(0,0,40,16,rgb(255,0,255),P1ScoreDisplay);
+    draw_x=0;
+    something=0;
+    for(col=0;col<4;col++)
+    {
+      if(P1ScoreDigits[col])
+      {
+        GrabRegion(P1ScoreDigits[col]<<3,0,(P1ScoreDigits[col]<<3)+7,15,draw_x,0,Font_NumBlue,P1ScoreDisplay);
+        something=1;
+      }
+      else
+      {
+        if(something) GrabRegion(P1ScoreDigits[col]<<3,0,(P1ScoreDigits[col]<<3)+7,15,draw_x,0,Font_NumBlue,P1ScoreDisplay);
+      }
+      draw_x+=8;
+    }
+    col=4;
+    GrabRegion(P1ScoreDigits[col]<<3,0,(P1ScoreDigits[col]<<3)+7,15,draw_x,0,Font_NumBlue,P1ScoreDisplay);
+  }
+
+  TBlit(232,63,P1ScoreDisplay,screen);
+
+
+  if(P1StopTime)
+  {
+    MrStopTimer--;
+    if(MrStopTimer<=0)
+    {
+      MrStopTimer=MrStopAni[P1StopTime];
+      if(MrStopState) MrStopState=0;
+      else MrStopState=1;
+      P1SpeedLVRender=1;
+    }
+  }
+  if(P1SpeedLVRender)
+  {
+    RectFill(0,0,48,48,rgb(255,0,255),P1SpeedLVDisplay);
+    if(P1StopTime)
+    {
+      Blit(0,0,Graphics_MrStop[MrStopState],P1SpeedLVDisplay);
+      if(MrStopState)
+      {
+        P1SpeedLVDigits[0]=P1StopTime/10;
+        P1SpeedLVDigits[1]=P1StopTime%10;
+        GrabRegion(P1SpeedLVDigits[0]<<3,0,(P1SpeedLVDigits[0]<<3)+7,15, 0,0,Font_NumRed,P1SpeedLVDisplay);
+        GrabRegion(P1SpeedLVDigits[1]<<3,0,(P1SpeedLVDigits[1]<<3)+7,15, 8,0,Font_NumRed,P1SpeedLVDisplay);
+      }
+    }
+    else
+    {
+      P1SpeedLVDigits[0]=P1SpeedLV/10;
+      P1SpeedLVDigits[1]=P1SpeedLV%10;
+      if(P1SpeedLVDigits[0]) GrabRegion(P1SpeedLVDigits[0]<<3,0,(P1SpeedLVDigits[0]<<3)+7,15, 32,2,Font_NumBlue,P1SpeedLVDisplay);
+      GrabRegion(P1SpeedLVDigits[1]<<3,0,(P1SpeedLVDigits[1]<<3)+7,15, 40,2,Font_NumBlue,P1SpeedLVDisplay);
+      Blit(1,25,Graphics_level,P1SpeedLVDisplay);
+      Blit(1,35,Graphics_Difficulty[P1DifficultyLV],P1SpeedLVDisplay);
+    }
+  }
+
+  TBlit(224,95,P1SpeedLVDisplay,screen);
+}--]]
 
