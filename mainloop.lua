@@ -37,9 +37,9 @@ function fmainloop()
 		config.window_x or x,
 		config.window_y or y,
 		config.display or display)
-	gprint("Copying Puzzles Readme")
-	wait()
-	copy_file("Custom Puzzles Readme.txt", "puzzles/README.txt")
+	--gprint("Copying Puzzles Readme")
+	--wait()
+	--copy_file("Custom Puzzles Readme.txt", "puzzles/README.txt")
 	gprint("Reading replay file", 300, 280)
 	wait()
 	read_replay_file()
