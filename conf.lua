@@ -1,3 +1,4 @@
+love.filesystem.setRequirePath("?.lua;?/init.lua;libs/?.lua")
 require("consts")
 
 function love.conf(t)

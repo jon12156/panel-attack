@@ -39,12 +39,12 @@ function find_character_SFX(character, SFX_name)
 		--If they are missing others, that's fine.
 		--(ie. some characters won't have "match_garbage" or a fancier "chain-x6")
 		local cur_dir_chain = check_supported_extensions(current_dir.."/"..character.."/chain")
-		if SFX_name == "chain" and cur_dir_chain then 
+		if SFX_name == "chain" and cur_dir_chain then
 			if config.debug_mode then print("loaded "..SFX_name.." for "..character) end
 			return cur_dir_chain
 		end
 		local cur_dir_combo = check_supported_extensions(current_dir.."/"..character.."/combo")
-		if SFX_name == "combo" and cur_dir_combo then 
+		if SFX_name == "combo" and cur_dir_combo then
 			if config.debug_mode then print("loaded "..SFX_name.." for "..character) end
 			return cur_dir_combo
 		elseif SFX_name == "combo" and cur_dir_chain then
@@ -55,7 +55,7 @@ function find_character_SFX(character, SFX_name)
 			if config.debug_mode then print("substituted found combo SFX for "..SFX_name.." for "..character) end
 			return cur_dir_combo
 		end
-		
+
 		local other_requested_SFX = check_supported_extensions(current_dir.."/"..character.."/"..SFX_name)
 		if other_requested_SFX then
 			if config.debug_mode then print("loaded "..SFX_name.." for "..character) end
@@ -93,7 +93,7 @@ function find_music(character, music_type)
 				found_source = check_supported_extensions("sounds/"..sounds_dir.."/music/"..stages[character].."/"..music_type)
 				if found_source then
 					if config.debug_mode then print("In selected sound directory stages, found "..music_type.." for "..character) end
-					
+
 				else
 					if config.debug_mode then print("In selected sound directory stages, did not find "..music_type.." for "..character) end
 				end
@@ -197,7 +197,7 @@ function sound_init()
 			characters = {},
 		}
 	}
-	zero_sound = check_supported_extensions("zero_music")
+	zero_sound = nil
 	required_char_SFX = {"chain", "combo"}
 	-- @CardsOfTheHeart says there are 4 chain sfx: --x2/x3, --x4, --x5 is x2/x3 with an echo effect, --x6+ is x4 with an echo effect
 	allowed_char_SFX = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match"}
@@ -210,7 +210,7 @@ function sound_init()
 			if not sounds.SFX.characters[name][sound] then
 				if string.find(sound, "chain") then
 					sounds.SFX.characters[name][sound] = find_character_SFX(name, "chain")
-				elseif string.find(sound, "combo") then 
+				elseif string.find(sound, "combo") then
 					sounds.SFX.characters[name][sound] = find_character_SFX(name, "combo")
 				end
 			end
@@ -227,10 +227,10 @@ function sound_init()
 		end
 	end
 	assert_requirements_met()
-	
+
 	love.audio.setVolume(config.master_volume/100)
 	set_volume(sounds.SFX, config.SFX_volume/100)
-	set_volume(sounds.music, config.music_volume/100) 
+	set_volume(sounds.music, config.music_volume/100)
 end
 
 
@@ -249,12 +249,18 @@ end
 function find_and_add_music(character, musicType)
 	local start_music = sounds.music.characters[character][musicType .. "_start"] or zero_sound
 	local loop_music = sounds.music.characters[character][musicType]
-	music_t[love.timer.getTime()] = make_music_t(
-					start_music
-	)
-	music_t[love.timer.getTime() + start_music:getDuration()] = make_music_t(
-					loop_music, true
-	)
+	local loop_delay = start_music and start_music:getDuration() or 0
+	if start_music then
+		music_t[love.timer.getTime()] = make_music_t(
+						start_music
+		)
+
+	end
+	if loop_music then
+		music_t[love.timer.getTime() + loop_delay] = make_music_t(
+						loop_music, true
+		)
+	end
 end
 
 function make_music_t(source, loop)

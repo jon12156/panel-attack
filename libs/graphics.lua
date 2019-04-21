@@ -1,4 +1,4 @@
-require("input")
+require("libs/input")
 require("util")
 
 local floor = math.floor
