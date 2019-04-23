@@ -192,23 +192,3 @@ function make_local_gpanels(stack, prev_panels)
 		replay.gpan_buf = replay.gpan_buf .. ret
 	end
 end
-
-function Stack.send_controls(self)
-	local k = K[self.which]
-	local to_send = base64encode[
-		((keys[k.raise1] or keys[k.raise2] or this_frame_keys[k.raise1]
-			or this_frame_keys[k.raise2]) and 32 or 0) +
-		((this_frame_keys[k.swap1] or this_frame_keys[k.swap2]) and 16 or 0) +
-		((keys[k.up] or this_frame_keys[k.up]) and 8 or 0) +
-		((keys[k.down] or this_frame_keys[k.down]) and 4 or 0) +
-		((keys[k.left] or this_frame_keys[k.left]) and 2 or 0) +
-		((keys[k.right] or this_frame_keys[k.right]) and 1 or 0)+1]
-	if TCP_sock then
-		net_send("I"..to_send)
-	end
-	local replay = replay[self.mode]
-	if replay and replay.in_buf then
-		replay.in_buf = replay.in_buf .. to_send
-	end
-	return to_send
-end
