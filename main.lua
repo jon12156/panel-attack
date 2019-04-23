@@ -1,3 +1,5 @@
+Log	= require "game.log"
+
 socket = require "socket"
 json = require "dkjson"
 require "libs.util"
