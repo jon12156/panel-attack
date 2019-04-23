@@ -1,20 +1,21 @@
-socket = require("socket")
-json = require("dkjson")
-require("util")
-require("class")
-require("queue")
-require("globals")
-require("save")
-require("engine")
-require("graphics")
-require("libs/input")
-require("network")
-require("puzzles")
-require("mainloop")
-require("consts")
-require("sound")
-require("timezones")
-require("gen_panels")
+socket = require "socket"
+json = require "dkjson"
+require "libs.util"
+require "libs.class"
+require "libs.timezones"
+
+require "game.globals"
+require "game.save"
+require "game.engine"
+require "game.graphics"
+require "game.input"
+require "game.network"
+require "game.puzzles"
+require "game.mainloop"
+require "game.consts"
+require "game.sound"
+require "game.gen_panels"
+require "game.queue"
 
 local canvas = love.graphics.newCanvas(default_width, default_height)
 

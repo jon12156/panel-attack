@@ -1,5 +1,5 @@
 love.filesystem.setRequirePath("?.lua;?/init.lua;libs/?.lua")
-require("consts")
+require("game.consts")
 
 function love.conf(t)
 	t.title = "Panel Attack"

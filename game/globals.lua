@@ -1,4 +1,4 @@
-require("queue")
+require("game.queue")
 
 -- keyboard assignment vars
 K = {{up="up", down="down", left="left", right="right",

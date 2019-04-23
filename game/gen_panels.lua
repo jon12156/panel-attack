@@ -1,5 +1,5 @@
-require("util")
-require("server_globals")
+require("libs.util")
+require("game.server_globals")
 local random = math.random
 
 -- stuff should have first_seven, metal, vs_mode, metal_col, prev_metal_col

@@ -66,7 +66,7 @@ end
 function json_send(obj)
 	local json = json.encode(obj)
 	local len = json:len()
-	local prefix = "J"..char(floor(len/65536))..char(floor((len/256)%256))..char(len%256)
+	local prefix = "J"..char(math.floor(len/65536))..char(math.floor((len/256)%256))..char(len%256)
 	return net_send(prefix..json)
 end
 

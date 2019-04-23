@@ -1,5 +1,5 @@
-require("libs/input")
-require("util")
+require("game.input")
+require("libs.util")
 
 local floor = math.floor
 local ceil = math.ceil
@@ -115,11 +115,11 @@ function graphics_init()
 	IMG_cards[false] = {}
 	for i=4,66 do
 		IMG_cards[false][i] = load_img("combo"
-			..tostring(floor(i/10))..tostring(i%10)..".png")
+			..tostring(math.floor(i/10))..tostring(i%10)..".png")
 	end
 	for i=2,13 do
 		IMG_cards[true][i] = load_img("chain"
-			..tostring(floor(i/10))..tostring(i%10)..".png")
+			..tostring(math.floor(i/10))..tostring(i%10)..".png")
 	end
 	for i=14,99 do
 		IMG_cards[true][i] = load_img("chain00.png")
