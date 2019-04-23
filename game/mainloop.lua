@@ -290,7 +290,7 @@ function main_endless(...)
 	replay.in_buf = ""
 	replay.gpan_buf = ""
 	replay.mode = "endless"
-	P1 = Stack(1, "endless", ...)
+	P1 = Playfield(1, "endless", ...)
 	P1.do_countdown = config.ready_countdown_1P or false
 	replay.do_countdown = P1.do_countdown or false
 	replay.speed = P1.speed
@@ -319,7 +319,7 @@ end
 
 function main_time_attack(...)
 	consuming_timesteps = true
-	P1 = Stack(1, "time", ...)
+	P1 = Playfield(1, "time", ...)
 	make_local_panels(P1, "000000")
 	P1:starting_state()
 	while true do
@@ -654,8 +654,8 @@ function main_character_select()
 					local fake_P1 = P1
 					print("currently_spectating: "..tostring(currently_spectating))
 					local fake_P2 = P2
-					P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
-					P2 = Stack(2, "vs", msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
+					P1 = Playfield(1, "vs", msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
+					P2 = Playfield(2, "vs", msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
 					if currently_spectating then
 						P1.panel_buffer = fake_P1.panel_buffer
 						P1.gpanel_buffer = fake_P1.gpanel_buffer
@@ -898,7 +898,7 @@ function main_character_select()
 			return unpack(ret)
 		end
 		if my_state.ready and character_select_mode == "1p_vs_yourself" then
-			P1 = Stack(1, "vs", my_state.level, my_state.character)
+			P1 = Playfield(1, "vs", my_state.level, my_state.character)
 			P1.garbage_target = P1
 			make_local_panels(P1, "000000")
 			make_local_gpanels(P1, "000000")
@@ -1224,8 +1224,8 @@ function main_net_vs_setup(ip)
 			end
 		end)
 	end
-	P1 = Stack(1, "vs", P1_level)
-	P2 = Stack(2, "vs", P2_level)
+	P1 = Playfield(1, "vs", P1_level)
+	P2 = Playfield(2, "vs", P2_level)
 	if currently_spectating then
 		P1.panel_buffer = fake_P1.panel_buffer
 		P1.gpanel_buffer = fake_P1.gpanel_buffer
@@ -1433,8 +1433,8 @@ main_local_vs_setup = multi_func(function()
 		end)
 	end
 	to_print = "P1 level: "..maybe[1].."\nP2 level: "..(maybe[2])
-	P1 = Stack(1, "vs", chosen[1])
-	P2 = Stack(2, "vs", chosen[2])
+	P1 = Playfield(1, "vs", chosen[1])
+	P2 = Playfield(2, "vs", chosen[2])
 	P1.garbage_target = P2
 	P2.garbage_target = P1
 	P2.pos_x = 172
@@ -1516,8 +1516,8 @@ end
 
 function main_replay_vs()
 	local replay = replay.vs
-	P1 = Stack(1, "vs", replay.P1_level or 5)
-	P2 = Stack(2, "vs", replay.P2_level or 5)
+	P1 = Playfield(1, "vs", replay.P1_level or 5)
+	P2 = Playfield(2, "vs", replay.P2_level or 5)
 	P1.do_countdown = replay.do_countdown or false
 	P2.do_countdown = replay.do_countdown or false
 	P1.ice = true
@@ -1617,7 +1617,7 @@ function main_replay_endless()
 		return main_dumb_transition,
 			{main_select_mode, "I don't have an endless replay :("}
 	end
-	P1 = Stack(1, "endless", replay.speed, replay.difficulty)
+	P1 = Playfield(1, "endless", replay.speed, replay.difficulty)
 	P1.do_countdown = replay.do_countdown or false
 	P1.max_runs_per_frame = 1
 	P1.input_buffer = table.concat({replay.in_buf})
@@ -1662,7 +1662,7 @@ function main_replay_puzzle()
 		return main_dumb_transition,
 			{main_select_mode, "I don't have a puzzle replay :("}
 	end
-	P1 = Stack(1, "puzzle")
+	P1 = Playfield(1, "puzzle")
 	P1.do_countdown = replay.do_countdown or false
 	P1.max_runs_per_frame = 1
 	P1.input_buffer = replay.in_buf
@@ -1714,7 +1714,7 @@ function make_main_puzzle(puzzles)
 		consuming_timesteps = true
 		replay.puzzle = {}
 		local replay = replay.puzzle
-		P1 = Stack(1, "puzzle")
+		P1 = Playfield(1, "puzzle")
 		P1.do_countdown = config.ready_countdown_1P or false
 		local start_delay = 0
 		if awesome_idx == nil then

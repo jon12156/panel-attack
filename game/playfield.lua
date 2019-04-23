@@ -8,7 +8,7 @@ local current_music_is_casual = false -- must be false so that casual music star
 local d_col = {up=0, down=0, left=-1, right=1}
 local d_row = {up=1, down=-1, left=0, right=0}
 
-Stack = class(function(s, which, mode, speed, difficulty, player_number)
+Playfield = class(function(s, which, mode, speed, difficulty, player_number)
 		s.character = uniformly(characters)
 		s.max_health = 1
 		s.mode = mode or "endless"
@@ -163,7 +163,7 @@ Stack = class(function(s, which, mode, speed, difficulty, player_number)
 		s.prev_states = {}
 	end)
 
-function Stack:mkcpy(other)
+function Playfield:mkcpy(other)
 	if other == nil then
 		if #clone_pool == 0 then
 			other = {}
@@ -243,8 +243,8 @@ function Stack:mkcpy(other)
 	return other
 end
 
-function Stack:fromcpy(other)
-	Stack.mkcpy(other,self)
+function Playfield:fromcpy(other)
+	Playfield.mkcpy(other,self)
 	self:remove_extra_rows()
 end
 
@@ -255,7 +255,7 @@ end
 -- ---------------------------------------------------------------------------
 
 
-function Stack:set_puzzle_state(pstr, n_turns)
+function Playfield:set_puzzle_state(pstr, n_turns)
 	-- Copy the puzzle into our state
 	local sz = self.width * self.height
 	while string.len(pstr) < sz do
@@ -274,7 +274,7 @@ function Stack:set_puzzle_state(pstr, n_turns)
 	stop_character_sounds(self.character)
 end
 
-function Stack:puzzle_done()
+function Playfield:puzzle_done()
 	local panels = self.panels
 	for row=1, self.height do
 		for col=1, self.width do
@@ -287,7 +287,7 @@ function Stack:puzzle_done()
 	return true
 end
 
-function Stack:has_falling_garbage()
+function Playfield:has_falling_garbage()
 	for i=1,self.height+3 do --we shouldn't have to check quite 3 rows above height, but just to make sure...
 		local prow = self.panels[i]
 		for j=1,self.width do
@@ -299,7 +299,7 @@ function Stack:has_falling_garbage()
 	return false
 end
 
-function Stack:prep_rollback()
+function Playfield:prep_rollback()
 	-- Do stuff for rollback.
 	local prev_states = self.prev_states
 	-- prev_states will not exist if we're doing a rollback right now
@@ -315,7 +315,7 @@ function Stack:prep_rollback()
 	end
 end
 
-function Stack:starting_state(n)
+function Playfield:starting_state(n)
 	if self.do_first_row then
 		self.do_first_row = nil
 		for i=1,(n or 8) do
@@ -326,7 +326,7 @@ function Stack:starting_state(n)
 	stop_character_sounds(self.character)
 end
 
-function Stack:prep_first_row()
+function Playfield:prep_first_row()
 	if self.do_first_row then
 		self.do_first_row = nil
 		self:new_row()
@@ -335,7 +335,7 @@ function Stack:prep_first_row()
 end
 
 --local_run is for the stack that belongs to this client.
-function Stack:local_run()
+function Playfield:local_run()
 	self:update_cards()
 	self.input_state = self:send_controls()
 	self:prep_rollback()
@@ -345,7 +345,7 @@ function Stack:local_run()
 end
 
 --foreign_run is for a stack that belongs to another client.
-function Stack:foreign_run()
+function Playfield:foreign_run()
 	local times_to_run = math.min(string.len(self.input_buffer),
 			self.max_runs_per_frame)
 	if self.play_to_end then
@@ -365,7 +365,7 @@ function Stack:foreign_run()
 	end
 end
 
-function Stack:enqueue_card(chain, x, y, n)
+function Playfield:enqueue_card(chain, x, y, n)
 	self.card_q:push({frame=1, chain=chain, x=x, y=y, n=n})
 end
 
@@ -373,7 +373,7 @@ end
 
 
 -- The engine routine.
-function Stack:PdP()
+function Playfield:PdP()
 
 	local panels = self.panels
 	local width = self.width
@@ -1180,7 +1180,7 @@ end
 
 
 
-function Stack:swap()
+function Playfield:swap()
 	local panels = self.panels
 	local row = self.cur_row
 	local col = self.cur_col
@@ -1233,7 +1233,7 @@ function Stack:swap()
 	end
 end
 
-function Stack:remove_extra_rows()
+function Playfield:remove_extra_rows()
 	local panels = self.panels
 	local width = self.width
 	for row=#panels,self.height+1,-1 do
@@ -1251,7 +1251,7 @@ function Stack:remove_extra_rows()
 end
 
 -- drops a width x height garbage.
-function Stack:drop_garbage(width, height, metal)
+function Playfield:drop_garbage(width, height, metal)
 	local spawn_row = #self.panels
 	for i=#self.panels+1,#self.panels+height+1 do
 		self.panels[i] = {}
@@ -1284,7 +1284,7 @@ end
 -- prepare to send some garbage!
 -- also, delay any combo garbage that wasn't sent out yet
 -- and set it to be sent at the same time as this garbage.
-function Stack:set_combo_garbage(n_combo, n_metal)
+function Playfield:set_combo_garbage(n_combo, n_metal)
 	local stuff_to_send = {}
 	for i=3,n_metal do
 		stuff_to_send[#stuff_to_send+1] = {6, 1, true, false}
@@ -1306,7 +1306,7 @@ end
 
 -- the chain is over!
 -- let's send it and the stuff waiting on it.
-function Stack:set_chain_garbage(n_chain)
+function Playfield:set_chain_garbage(n_chain)
 	local tab = self.garbage_to_send[self.CLOCK]
 	if not tab then
 		tab = {}
@@ -1322,13 +1322,13 @@ function Stack:set_chain_garbage(n_chain)
 	tab[#tab+1] = {6, n_chain-1, false, true}
 end
 
-function Stack:really_send(to_send)
+function Playfield:really_send(to_send)
 	if self.garbage_target then
 		self.garbage_target:recv_garbage(self.CLOCK + GARBAGE_DELAY, to_send)
 	end
 end
 
-function Stack:recv_garbage(time, to_recv)
+function Playfield:recv_garbage(time, to_recv)
 	if self.CLOCK > time then
 		local prev_states = self.prev_states
 		local next_self = prev_states[time+1]
@@ -1387,7 +1387,7 @@ function Stack:recv_garbage(time, to_recv)
 	self.later_garbage[time] = garbage
 end
 
-function Stack:check_matches()
+function Playfield:check_matches()
 	local row = 0
 	local col = 0
 	local count = 0
@@ -1683,7 +1683,7 @@ function Stack:check_matches()
 	end
 end
 
-function Stack:set_hoverers(row, col, hover_time, add_chaining,
+function Playfield:set_hoverers(row, col, hover_time, add_chaining,
 		extra_tick, match_anyway, debug_tag)
 	assert(type(match_anyway) ~= "string")
 	-- the extra_tick flag is for use during Phase 1&2,
@@ -1728,7 +1728,7 @@ function Stack:set_hoverers(row, col, hover_time, add_chaining,
 	end
 end
 
-function Stack:new_row()
+function Playfield:new_row()
 	local panels = self.panels
 	-- move cursor up
 	self.cur_row = bound(1, self.cur_row + 1, self.top_cur_row)
@@ -1789,7 +1789,7 @@ end
 -- ---------------------------------------------------------------------------
 
 
-function Stack:render_cursor()
+function Playfield:render_cursor()
 	local shake_idx = #shake_arr - self.shake_time
 	local shake = math.ceil((shake_arr[shake_idx] or 0) * 13)
 	if self.countdown_timer then
@@ -1805,7 +1805,7 @@ function Stack:render_cursor()
 	end
 end
 
-function Stack:render_countdown()
+function Playfield:render_countdown()
 	if self.do_countdown and self.countdown_CLOCK then
 		local ready_x = self.pos_x + 12
 		local initial_ready_y = self.pos_y
@@ -1831,7 +1831,7 @@ function Stack:render_countdown()
 end
 
 
-function Stack:update_cards()
+function Playfield:update_cards()
 	for i=self.card_q.first,self.card_q.last do
 		local card = self.card_q[i]
 		if card_animation[card.frame] then
@@ -1845,7 +1845,7 @@ function Stack:update_cards()
 	end
 end
 
-function Stack:draw_cards()
+function Playfield:draw_cards()
 	for i=self.card_q.first,self.card_q.last do
 		local card = self.card_q[i]
 		if card_animation[card.frame] then
@@ -1857,7 +1857,7 @@ function Stack:draw_cards()
 	end
 end
 
-function Stack:render()
+function Playfield:render()
 	local mx,my
 	if config.debug_mode then
 		mx,my = love.mouse.getPosition()
@@ -2086,7 +2086,7 @@ end
 -- Input
 -- ---------------------------------------------------------------------------
 
-function Stack:controls()
+function Playfield:controls()
 	local new_dir = nil
 	local sdata = self.input_state
 	local raise, swap, up, down, left, right = unpack(base64decode[sdata])
@@ -2123,7 +2123,7 @@ end
 -- Networking
 -- ---------------------------------------------------------------------------
 
-function Stack:send_controls()
+function Playfield:send_controls()
 	local k = K[self.which]
 	local to_send = base64encode[
 		((keys[k.raise1] or keys[k.raise2] or this_frame_keys[k.raise1]
@@ -2144,4 +2144,4 @@ function Stack:send_controls()
 end
 
 
-return Stack
+return Playfield

@@ -5,7 +5,7 @@
 	--    (rising, timers, falling, cursor movement, swapping, landing)
 	--  . the matches-checking routine
 
-Stack			= require "game.stack"
+Playfield		= require "game.playfield"
 Panel			= require "game.panel"
 GarbageQueue	= require "game.garbagequeue"
 Telegraph		= require "game.telegraph"
