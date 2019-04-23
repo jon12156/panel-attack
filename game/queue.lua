@@ -3,13 +3,13 @@ Queue = class(function(q)
 		q.last  = -1
 	end)
 
-function Queue.push(self, value)
+function Queue:push(value)
 	local last = self.last + 1
 	self.last = last
 	self[last] = value
 end
 
-function Queue.pop(self)
+function Queue:pop()
 	local first = self.first
 	if first > self.last then
 		error("q is empty")
@@ -25,15 +25,15 @@ function Queue.pop(self)
 	return ret
 end
 
-function Queue.peek(self)
+function Queue:peek()
 	return self[self.first]
 end
 
-function Queue.len(self)
+function Queue:len()
 	return self.last - self.first + 1
 end
 
-function Queue.clear(self)
+function Queue:clear()
 	for i=self.first,self.last do
 		self[i]=nil
 	end

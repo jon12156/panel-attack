@@ -3,7 +3,7 @@ Panel = class(function(p)
 		p:clear()
 	end)
 
-function Panel.clear(self)
+function Panel:clear()
 		-- color 0 is an empty panel.
 		-- colors 1-7 are normal colors, 8 is [!].
 		self.color = 0
@@ -47,12 +47,12 @@ end
 
 
 
-function Panel.has_flags(self)
+function Panel:has_flags()
 	return (self.state ~= "normal") or self.is_swapping_from_left
 			or self.dont_swap or self.chaining
 end
 
-function Panel.clear_flags(self)
+function Panel:clear_flags()
 	self.combo_index = nil
 	self.combo_size = nil
 	self.chain_index = nil
@@ -66,24 +66,24 @@ end
 do
 	local exclude_hover_set = {matched=true, popping=true, popped=true,
 			hovering=true, falling=true}
-	function Panel.exclude_hover(self)
+	function Panel:exclude_hover()
 		return exclude_hover_set[self.state] or self.garbage
 	end
 
 	local exclude_match_set = {swapping=true, matched=true, popping=true,
 			popped=true, dimmed=true, falling=true}
-	function Panel.exclude_match(self)
+	function Panel:exclude_match()
 		return exclude_match_set[self.state] or self.color == 0 or self.color == 9
 			or (self.state == "hovering" and not self.match_anyway)
 	end
 
 	local exclude_swap_set = {matched=true, popping=true, popped=true,
 			hovering=true, dimmed=true}
-	function Panel.exclude_swap(self)
+	function Panel:exclude_swap()
 		return exclude_swap_set[self.state] or self.dont_swap or self.garbage
 	end
 
-	function Panel.support_garbage(self)
+	function Panel:support_garbage()
 		return self.color ~= 0 or self.hovering
 	end
 
@@ -93,11 +93,11 @@ do
 	-- opportunistically.
 	local block_garbage_fall_set = {matched=true, popping=true,
 			popped=true, hovering=true, swapping=true}
-	function Panel.block_garbage_fall(self)
+	function Panel:block_garbage_fall()
 		return block_garbage_fall_set[self.state] or self.color == 0
 	end
 
-	function Panel.dangerous(self)
+	function Panel:dangerous()
 		return self.color ~= 0 and (self.state ~= "falling" or not self.garbage)
 	end
 end

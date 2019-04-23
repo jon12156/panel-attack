@@ -5,7 +5,7 @@ GarbageQueue = class(function(s)
 	s.metal = 0
 end)
 
-function GarbageQueue.push(self, garbage)
+function GarbageQueue:push(garbage)
 	local width, height, metal, from_chain = unpack(garbage)
 	if metal then
 		self.metal = self.metal + 1
@@ -20,7 +20,7 @@ function GarbageQueue.push(self, garbage)
 	end
 end
 
-function GarbageQueue.pop(self, just_peeking)
+function GarbageQueue:pop(just_peeking)
 	--check for any chain garbage, and return the first one (chronologically), if any
 	if self.chain_garbage:peek() then
 		if just_peeking then
@@ -49,10 +49,10 @@ function GarbageQueue.pop(self, just_peeking)
 	return nil
 end
 
-function GarbageQueue.peek(self)
+function GarbageQueue:peek()
 	return self:pop(true) --(just peeking)
 end
-function GarbageQueue.len(self)
+function GarbageQueue:len()
 	local ret = 0
 	ret = ret + self.chain_garbage:len()
 	for k,v in ipairs(self.combo_garbage) do
@@ -62,7 +62,7 @@ function GarbageQueue.len(self)
 	return ret
 end
 
-function GarbageQueue.grow_chain(self)
+function GarbageQueue:grow_chain()
 -- TODO: this should increase the size of the first chain garbage by 1.
 -- This is used by the telegraph to increase the size of the chain garbage being built
 -- or add a 6-wide if there is not chain garbage yet in the queue

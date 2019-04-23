@@ -6,7 +6,7 @@ Telegraph = class(function(self, sender, recipient)
 	self.recipient = recipient
 end)
 
-function Telegraph.push(self, attack_type, attack_size)
+function Telegraph:push(attack_type, attack_size)
 	self.stopper = {garbage_type=attack_type, attack_size, frame_to_release=self.stack.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY}
 	if attack_type == "chain" then
 		self.garbage_queue:grow_chain()
@@ -16,7 +16,7 @@ function Telegraph.push(self, attack_type, attack_size)
 	end
 end
 
-function Telegraph.pop_all_ready_garbage()
+function Telegraph:pop_all_ready_garbage()
 	local ready_garbage = {}
 	if self.stopper and self.stopper.frame_to_release <= self.recipient.CLOCK then
 		self.stopper = nil
@@ -40,7 +40,7 @@ function Telegraph.pop_all_ready_garbage()
 		return ready_garbage
 	end
 end
-function Telegraph.sender_chain_ended()
+function Telegraph:sender_chain_ended()
 	self.stopper = nil
 end
 
