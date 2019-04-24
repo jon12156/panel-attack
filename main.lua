@@ -97,6 +97,8 @@ function love.draw()
 	end
 	gfx_q:clear()
 	love.graphics.print("FPS: "..love.timer.getFPS(),315,115) -- TODO: Make this a toggle
+	love.graphics.print(string.format("%d K", collectgarbage("count")), 370, 600)
+
 	if love.graphics.getSupported("canvas") then
 		love.graphics.setCanvas()
 		love.graphics.clear(love.graphics.getBackgroundColor())
