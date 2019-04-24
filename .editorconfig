@@ -1,0 +1,9 @@
+# Automatically add new line to end of all files on save.
+[*]
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Four-space tabs in everything else
+[*.*]
+indent_style = tab
+indent_size = 4
