@@ -9,7 +9,7 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
 	main_local_vs_yourself_setup, main_local_vs_yourself,
 	main_options, exit_options_menu, main_music_test
 
-VERSION = "030"
+VERSION = "037"
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
 local currently_spectating = false
@@ -506,7 +506,7 @@ function main_character_select()
 	print("map[1][1] = "..(map[1][1] or "nil"))
 	for i=1,X do
 		for j=1,Y do
-			if map[i][j] then
+			if map[i] and map[i][j] then
 				name_to_xy[map[i][j]] = {i,j}
 			end
 		end
@@ -523,9 +523,9 @@ function main_character_select()
 		button_width = w*100-2*spacing
 		button_height = h*100-2*spacing
 		grectangle("line", render_x, render_y, button_width, button_height)
-		if IMG_character_icons[character_display_names_to_original_names[str]] then
-			local orig_w, orig_h = IMG_character_icons[character_display_names_to_original_names[str]]:getDimensions()
-			menu_draw(IMG_character_icons[character_display_names_to_original_names[str]], render_x, render_y, 0, button_width/orig_w, button_height/orig_h )
+		if IMG_character_icons[str] then
+			local orig_w, orig_h = IMG_character_icons[str]:getDimensions()
+			menu_draw(IMG_character_icons[str], render_x, render_y, 0, button_width/orig_w, button_height/orig_h )
 		end
 		local y_add,x_add = 10,30
 		local pstr = str:gsub("^%l", string.upper)
@@ -559,7 +559,7 @@ function main_character_select()
 		local draw_cur_this_frame = false
 		local cursor_frame = 1
 		if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs")
-		and op_state and op_state.cursor and (op_state.cursor == str or op_state.cursor == character_display_names_to_original_names[str]) then
+		and op_state and op_state.cursor and (op_state.cursor == str or op_state.cursor == str) then
 			player_num = 2
 			if op_state.ready then
 				if (math.floor(menu_clock/cur_blink_frequency)+player_num)%2+1 == player_num then
@@ -583,7 +583,7 @@ function main_character_select()
 				menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
 			end
 		end
-		if my_state and my_state.cursor and (my_state.cursor == str or my_state.cursor == character_display_names_to_original_names[str]) then
+		if my_state and my_state.cursor and (my_state.cursor == str or my_state.cursor == str) then
 			player_num = 1
 			if my_state.ready then
 				if (math.floor(menu_clock/cur_blink_frequency)+player_num)%2+1 == player_num then
@@ -651,8 +651,12 @@ function main_character_select()
 					local fake_P1 = P1
 					print("currently_spectating: "..tostring(currently_spectating))
 					local fake_P2 = P2
-					P1 = Playfield(1, "vs", msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
-					P2 = Playfield(2, "vs", msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
+
+					local p1char	= stages[msg.player_settings.character] and msg.player_settings.character or characters[1]
+					local p2char	= stages[msg.opponent_settings.character] and msg.opponent_settings.character or characters[1]
+
+					P1 = Playfield(1, "vs", msg.player_settings.level, p1char, msg.player_settings.player_number)
+					P2 = Playfield(2, "vs", msg.opponent_settings.level, p2char, msg.opponent_settings.player_number)
 					if currently_spectating then
 						P1.panel_buffer = fake_P1.panel_buffer
 						P1.gpanel_buffer = fake_P1.gpanel_buffer
@@ -668,6 +672,7 @@ function main_character_select()
 											P1_name=my_name, P2_name=op_name,
 											P1_char=P1.character,P2_char=P2.character,
 											ranked=msg.ranked, do_countdown=true}
+					print("stupid debug bullshit: ", P1.character, P2.character)
 					if currently_spectating and replay_of_match_so_far then --we joined a match in progress
 						replay.vs = replay_of_match_so_far.vs
 						P1.input_buffer = replay_of_match_so_far.vs.in_buf
@@ -740,7 +745,7 @@ function main_character_select()
 		draw_button(1,7,1,1,"ready")
 		for i=2,X do
 			for j=1,Y do
-				draw_button(i,j,1,1,character_display_names[map[i][j]] or map[i][j])
+				draw_button(i,j,1,1,map[i][j] or map[i][j])
 			end
 		end
 		local my_rating_difference = ""
@@ -787,7 +792,7 @@ function main_character_select()
 			state = state.."  expected: "
 				..my_expected_win_ratio.."%"
 		end
-		state = state.."  Char: "..character_display_names[my_state.character].."  Ready: "..tostring(my_state.ready or false)
+		state = state.."  Char: "..my_state.character .."  Ready: "..tostring(my_state.ready or false)
 		if op_state and op_name then
 			state = state.."\n"
 			--op state - add to be displayed
@@ -813,7 +818,7 @@ function main_character_select()
 				state = state.."  expected: "
 					..op_expected_win_ratio.."%"
 			end
-			state = state.."  Char: "..character_display_names[op_state.character].."  Ready: "..tostring(op_state.ready or false)
+			state = state.."  Char: "..op_state.character.."  Ready: "..tostring(op_state.ready or false)
 			--state = state.." "..json.encode(op_state)
 		end
 		gprint(state, 50, 50)
@@ -859,7 +864,7 @@ function main_character_select()
 					elseif active_str == "match type desired" then
 						config.ranked = not config.ranked
 					else
-						config.character = active_str
+						config.character = stages[active_str] and active_str or characters[1]
 						--When we select a character, move cursor to "ready"
 						active_str = "ready"
 						cursor = shallowcpy(name_to_xy["ready"])
@@ -1530,8 +1535,11 @@ function main_replay_vs()
 	P2.gpanel_buffer = replay.R
 	P1.max_runs_per_frame = 1
 	P2.max_runs_per_frame = 1
+	print("more debug bullshit: ", P1.character, P2.character)
 	P1.character = stages[replay.P1_char] and replay.P1_char or characters[1]
 	P2.character = stages[replay.P2_char] and replay.P2_char or characters[1]
+	print("even more debug bullshit: ", P1.character, P2.character)
+
 	my_name = replay.P1_name or "Player 1"
 	op_name = replay.P2_name or "Player 2"
 	if character_select_mode == "2p_net_vs" then

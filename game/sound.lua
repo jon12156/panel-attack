@@ -155,6 +155,7 @@ function assert_requirements_met()
 end
 
 function stop_character_sounds(character)
+	print("stopping sounds for ", character)
 	music_t = {}
 	for k, sound in ipairs(allowed_char_SFX) do
 		if sounds.SFX.characters[character][sound] then

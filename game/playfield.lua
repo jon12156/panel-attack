@@ -26,18 +26,21 @@ Playfield = class(function(s, which, mode, speed, difficulty, player_number)
 			local level = speed or 5
 			s.character = (type(difficulty) == "string") and difficulty or s.character
 			s.level = level
-			speed = level_to_starting_speed[level]
-			--difficulty = level_to_difficulty[level]
-			s.speed_times = {15*60, idx=1, delta=15*60}
-			s.max_health = level_to_hang_time[level]
-			s.FRAMECOUNT_HOVER  = level_to_hover[s.level]
-			s.FRAMECOUNT_FLASH  = level_to_flash[s.level]
-			s.FRAMECOUNT_FACE   = level_to_face[s.level]
-			s.FRAMECOUNT_POP    = level_to_pop[s.level]
-			s.combo_constant    = level_to_combo_constant[s.level]
-			s.combo_coefficient = level_to_combo_coefficient[s.level]
-			s.chain_constant    = level_to_chain_constant[s.level]
-			s.chain_coefficient = level_to_chain_coefficient[s.level]
+
+			--difficulty			= level_to_difficulty[level]
+			speed					= level_to_starting_speed[level]
+			s.speed_times			= {15*60, idx=1, delta=15*60}
+			s.max_health			= level_to_hang_time[level]
+			s.FRAMECOUNT_HOVER		= level_to_hover[s.level]
+			s.FRAMECOUNT_GPHOVER	= level_to_garbage_panel_hover[s.level]
+			s.FRAMECOUNT_FLASH		= level_to_flash[s.level]
+			s.FRAMECOUNT_FACE		= level_to_face[s.level]
+			s.FRAMECOUNT_POP		= level_to_pop[s.level]
+			s.combo_constant		= level_to_combo_constant[s.level]
+			s.combo_coefficient		= level_to_combo_coefficient[s.level]
+			s.chain_constant		= level_to_chain_constant[s.level]
+			s.chain_coefficient		= level_to_chain_coefficient[s.level]
+
 			if s.mode == "2ptime" then
 				s.NCOLORS = level_to_ncolors_time[level]
 			else
@@ -476,7 +479,7 @@ function Playfield:PdP()
 
 	-- determine whether to play danger music
 		-- Changed this to play danger when something in top 3 rows
-		-- and to play casual when nothing in top 4 rows
+		-- and to play casual when nothing in top 3 rows
 		if not self.danger_music then
 				-- currently playing casual
 				for _, prow in pairs({panels[self.height], panels[self.height-1], panels[self.height-2]}) do
@@ -491,7 +494,7 @@ function Playfield:PdP()
 		else
 				--currently playing danger
 				local toggle_back = true
-				for _, prow in pairs({panels[self.height], panels[self.height-1], panels[self.height-2], panels[self.height-3]}) do
+				for _, prow in pairs({panels[self.height], panels[self.height-1], panels[self.height-1], panels[self.height-2]}) do
 						for idx=1, width do
 								if prow[idx].color ~= 0 then
 										toggle_back = false
@@ -609,7 +612,8 @@ function Playfield:PdP()
 							local color, chaining = panel.color, panel.chaining
 							panel:clear()
 							panel.color, panel.chaining = color, chaining
-							self:set_hoverers(row,col,5,true,true)
+							self:set_hoverers(row, col, self.FRAMECOUNT_GPHOVER, true, true)
+							panel.fell_from_garbage = 12
 						else
 							panel.state = "normal"
 						end
@@ -777,7 +781,7 @@ function Playfield:PdP()
 						if panel.combo_size == panel.combo_index then
 							self.panels_cleared = self.panels_cleared + 1
 							if self.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
-								self.metal_panels_queued = self.metal_panels_queued + 1
+								self.metal_panels_queued = math.min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
 							end
 							SFX_Pop_Play = 1
 							self.poppedPanelIndex = panel.combo_index
@@ -794,7 +798,7 @@ function Playfield:PdP()
 									* self.FRAMECOUNT_POP
 							self.panels_cleared = self.panels_cleared + 1
 							if self.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
-								self.metal_panels_queued = self.metal_panels_queued + 1
+								self.metal_panels_queued = math.min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
 							end
 							SFX_Pop_Play = 1
 							self.poppedPanelIndex = panel.combo_index
@@ -822,6 +826,15 @@ function Playfield:PdP()
 						error("something terrible happened")
 					end
 				-- the timer-expiring action has completed
+				end
+			end
+			-- Advance the fell-from-garbage bounce timer, or clear it and stop animating if the panel isn't hovering or falling.
+			if cntinue then
+			elseif panel.fell_from_garbage then
+				if panel.state ~= "hovering" and panel.state ~= "falling" then
+					panel.fell_from_garbage = nil
+				else
+					panel.fell_from_garbage = panel.fell_from_garbage - 1
 				end
 			end
 		end
@@ -1502,7 +1515,7 @@ function Playfield:check_matches()
 
 	local pre_stop_time = self.FRAMECOUNT_MATCH +
 			self.FRAMECOUNT_POP * (combo_size + garbage_size)
-	local garbage_match_time = self.FRAMECOUNT_MATCH + garbage_bounce_time +
+	local garbage_match_time = self.FRAMECOUNT_MATCH +
 			self.FRAMECOUNT_POP * (combo_size + garbage_size)
 	garbage_index=garbage_size-1
 	combo_index=combo_size
@@ -1515,7 +1528,6 @@ function Playfield:check_matches()
 				panel.timer = garbage_match_time + 1
 				panel.initial_time = garbage_match_time
 				panel.pop_time = self.FRAMECOUNT_POP * garbage_index
-						+ garbage_bounce_time
 				panel.pop_index = math.min(math.max(garbage_size - garbage_index,1),10)
 				panel.y_offset = panel.y_offset - 1
 				panel.height = panel.height - 1
@@ -1942,9 +1954,8 @@ function Playfield:render()
 									draw(imgs.pop, draw_x, draw_y, 0, 16/popped_w, 16/popped_h)
 								end
 							elseif panel.y_offset == -1 then
-								local p_w, p_h = IMG_panels[panel.color][garbage_bounce_table[panel.timer] or 1]:getDimensions()
-								draw(IMG_panels[panel.color][
-										garbage_bounce_table[panel.timer] or 1], draw_x, draw_y, 0, 16/p_w, 16/p_h)
+								local p_w, p_h = IMG_panels[panel.color][1]:getDimensions()
+								draw(IMG_panels[panel.color][1], draw_x, draw_y, 0, 16/p_w, 16/p_h)
 							end
 						elseif flash_time % 2 == 1 then
 							if panel.metal then
@@ -1992,6 +2003,8 @@ function Playfield:render()
 						end
 					elseif panel.state == "dimmed" then
 						draw_frame = 7
+					elseif panel.fell_from_garbage then
+						draw_frame = garbage_bounce_table[panel.fell_from_garbage] or 1
 					elseif self.danger_col[col] then
 						draw_frame = danger_bounce_table[
 							wrap(1,self.danger_timer+1+math.floor((col-1)/2),#danger_bounce_table)]

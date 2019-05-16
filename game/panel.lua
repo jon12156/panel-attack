@@ -53,13 +53,15 @@ function Panel:has_flags()
 end
 
 function Panel:clear_flags()
-	self.combo_index = nil
-	self.combo_size = nil
-	self.chain_index = nil
-	self.is_swapping_from_left = nil
-	self.dont_swap = nil
-	self.chaining = nil
-	self.state = "normal"
+	self.combo_index			= nil
+	self.combo_size				= nil
+	self.chain_index			= nil
+	self.is_swapping_from_left	= nil
+	self.dont_swap				= nil
+	self.chaining				= nil
+	-- Animation timer for "bounce" after falling from garbage.
+	self.fell_from_garbage		= nil	
+	self.state					= "normal"
 end
 
 
