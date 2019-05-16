@@ -28,7 +28,7 @@ leftover_time = 0
 function fmainloop()
 	local func, arg = main_select_mode, nil
 	replay = {}
-	config = {character="lip", level=5, name="defaultname", master_volume=100, SFX_volume=100, music_volume=100, debug_mode=false, ready_countdown_1P = true, save_replays_publicly = "with my name", assets_dir=default_assets_dir, sounds_dir=default_sounds_dir}
+	config = {character="yoshi", level=5, name="defaultname", master_volume=100, SFX_volume=100, music_volume=100, debug_mode=false, ready_countdown_1P = true, save_replays_publicly = "with my name", assets_dir=default_assets_dir, sounds_dir=default_sounds_dir}
 	gprint("Reading config file", 300, 280)
 	wait()
 	read_conf_file() -- TODO: stop making new config files
@@ -428,10 +428,7 @@ function main_character_select()
 		local cursor,op_cursor,X,Y
 		if current_server_supports_ranking then
 			map = {{"match type desired", "match type desired", "match type desired", "match type desired", "level", "level", "ready"},
-						 {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
-						 {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
-						 {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
-						 {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
+						 {"random", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
 		else
 			map = {{"level", "level", "level", "level", "level", "level", "ready"},
 						 {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
@@ -447,7 +444,7 @@ function main_character_select()
 					 {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
 					 {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
 	end
-	local op_state = global_op_state or {character="lip", level=5, cursor="level", ready=false}
+	local op_state = global_op_state or {character="yoshi", level=5, cursor="level", ready=false}
 	global_op_state = nil
 	cursor,op_cursor,X,Y = {1,1},{1,1},5,7
 	local k = K[1]
@@ -1533,8 +1530,8 @@ function main_replay_vs()
 	P2.gpanel_buffer = replay.R
 	P1.max_runs_per_frame = 1
 	P2.max_runs_per_frame = 1
-	P1.character = replay.P1_char
-	P2.character = replay.P2_char
+	P1.character = stages[replay.P1_char] and replay.P1_char or characters[1]
+	P2.character = stages[replay.P2_char] and replay.P2_char or characters[1]
 	my_name = replay.P1_name or "Player 1"
 	op_name = replay.P2_name or "Player 2"
 	if character_select_mode == "2p_net_vs" then
@@ -1973,9 +1970,9 @@ function main_options(starting_idx)
 		--options menu table reference:
 		--{[1]"Option Name", [2]current or default value, [3]type, [4]min or bool value or choices_table,
 		-- [5]max, [6]sound_source, [7]selectable, [8]next_func, [9]play_while selected}
-			{"Master Volume", config.master_volume or 100, "numeric", 0, 100, sounds.music.characters["lip"].normal_music, true, nil, true},
+			{"Master Volume", config.master_volume or 100, "numeric", 0, 100, sounds.music.characters["yoshi"].normal_music, true, nil, true},
 			{"SFX Volume", config.SFX_volume or 100, "numeric", 0, 100, sounds.SFX.cur_move, true},
-			{"Music Volume", config.music_volume or 100, "numeric", 0, 100, sounds.music.characters["lip"].normal_music, true, nil, true},
+			{"Music Volume", config.music_volume or 100, "numeric", 0, 100, sounds.music.characters["yoshi"].normal_music, true, nil, true},
 			{"Debug Mode", debug_mode_text[config.debug_mode or false], "bool", false, nil, nil,false},
 			{"Save replays publicly",
 				save_replays_publicly_choices[config.save_replays_publicly]
@@ -2239,7 +2236,7 @@ function main_music_test()
 	end
 
 	-- debug scroll to music
-	while tracks[index].name ~= "lip_normal" do index = index + 1 end
+	while tracks[index].name ~= "yoshi_normal" do index = index + 1 end
 	-- initial song starts here
 	find_and_add_music(tracks[index].char, tracks[index].type)
 
