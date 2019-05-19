@@ -22,7 +22,7 @@ function love.conf(t)
 	window.vsync = true       -- Enable vertical sync (boolean)
 	window.fullscreen = false -- Enable fullscreen (boolean)
 	window.fsaa = 0           -- The number of FSAA-buffers (number)
-	t.console = false           -- Attach a console (boolean, Windows only)
+	t.console = true           -- Attach a console (boolean, Windows only)
 	t.modules.joystick = true
 	t.modules.timer = true      -- Enable the timer module (boolean)
 	t.modules.image = true      -- Enable the image module (boolean)
