@@ -2,6 +2,11 @@ function main_character_select()
 	love.audio.stop()
 	stop_the_music()
 	local map = {}
+
+	-- -------------------------------------------------------
+	-- 2P Network VS
+	-- -------------------------------------------------------
+
 	if character_select_mode == "2p_net_vs" then
 		local opponent_connected = false
 		local retries, retry_limit = 0, 250
@@ -16,21 +21,6 @@ function main_character_select()
 			do_messages()
 			retries = retries + 1
 		end
-		-- if room_number_last_spectated and retries >= retry_limit and currently_spectating then
-			-- request_spectate(room_number_last_spectated)
-			-- retries = 0
-			-- while not global_initialize_room_msg and retries < retry_limit do
-				-- for _,msg in ipairs(this_frame_messages) do
-					-- if msg.create_room or msg.character_select or msg.spectate_request_granted then
-						-- global_initialize_room_msg = msg
-					-- end
-				-- end
-				-- gprint("Lost connection.  Trying to rejoin...", 300, 280)
-				-- coroutine.yield()
-				-- do_messages()
-				-- retries = retries + 1
-			-- end
-		-- end
 		if not global_initialize_room_msg then
 			return main_dumb_transition, {main_select_mode, "Failed to connect.\n\nReturning to main menu", 60, 300}
 		end
@@ -94,6 +84,12 @@ function main_character_select()
 						 {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
 		end
 	end
+
+
+	-- -------------------------------------------------------
+	-- 1P Solo VS
+	-- -------------------------------------------------------
+
 	if character_select_mode == "1p_vs_yourself" then
 		map = {{"level", "level", "level", "level", "level", "level", "ready"},
 					 {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
@@ -101,6 +97,12 @@ function main_character_select()
 					 {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
 					 {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
 	end
+
+
+	-- -------------------------------------------------------
+	-- what the fuck
+	-- -------------------------------------------------------
+
 	local op_state = global_op_state or {character="yoshi", level=5, cursor="level", ready=false}
 	global_op_state = nil
 	cursor,op_cursor,X,Y = {1,1},{1,1},5,7
@@ -111,6 +113,12 @@ function main_character_select()
 	my_win_count = my_win_count or 0
 	local prev_state = shallowcpy(my_state)
 	op_win_count = op_win_count or 0
+
+
+	-- -------------------------------------------------------
+	-- 2P Network VS again
+	-- -------------------------------------------------------
+
 	if character_select_mode == "2p_net_vs" then
 		global_current_room_ratings = global_current_room_ratings or {{new=0,old=0,difference=0},{new=0,old=0,difference=0}}
 		my_expected_win_ratio = nil
@@ -133,10 +141,21 @@ function main_character_select()
 						,2))
 		end
 	end
+
+	-- -------------------------------------------------------
+	-- WHAT IS HAPPENING WHY IS THIS A DIFFERENT BLOCK
+	-- -------------------------------------------------------
+
 	if character_select_mode == "2p_net_vs" then
 		match_type = match_type or "Casual"
 		if match_type == "" then match_type = "Casual" end
 	end
+
+
+	-- -------------------------------------------------------
+	-- probably something for the character select menu
+	-- -------------------------------------------------------
+
 	match_type_message = match_type_message or ""
 	local selected = false
 	local active_str = "level"
@@ -158,9 +177,16 @@ function main_character_select()
 		write_char_sel_settings_to_file()
 		return json_send({leave_room=true})
 	end
+
+
+	-- -------------------------------------------------------
+	-- why
+	-- -------------------------------------------------------
+
 	local name_to_xy = {}
 	print("character_select_mode = "..(character_select_mode or "nil"))
 	print("map[1][1] = "..(map[1][1] or "nil"))
+
 	for i=1,X do
 		for j=1,Y do
 			if map[i] and map[i][j] then
@@ -168,6 +194,7 @@ function main_character_select()
 			end
 		end
 	end
+
 	local function draw_button(x,y,w,h,str)
 		local menu_width = Y*100
 		local menu_height = X*80
@@ -186,6 +213,8 @@ function main_character_select()
 		end
 		local y_add,x_add = 10,30
 		local pstr = str:gsub("^%l", string.upper)
+
+		-- why is this a button in here
 		if str == "level" then
 			if selected and active_str == "level" then
 				pstr = my_name.."'s level: < "..my_state.level.." >"
@@ -197,6 +226,8 @@ function main_character_select()
 			end
 			y_add,x_add = 9,180
 		end
+
+		-- whY ARE YOU DOING THIS
 		if str == "match type desired" then
 			local my_type_selection, op_type_selection = "[casual]  ranked", "[casual]  ranked"
 			if my_state.ranked then
@@ -208,6 +239,10 @@ function main_character_select()
 			pstr = my_name..": "..my_type_selection.."\n"..op_name..": "..op_type_selection
 			y_add,x_add = 9,180
 		end
+
+		-- oh my god why are you comparing the cursor to the string of the button
+		-- why
+		-- aaaaag
 		if my_state.cursor == str then pstr = pstr.."\n"..my_name end
 		if op_state and op_name and op_state.cursor == str then pstr = pstr.."\n"..op_name end
 		local cur_blink_frequency = 4
@@ -215,6 +250,11 @@ function main_character_select()
 		local player_num
 		local draw_cur_this_frame = false
 		local cursor_frame = 1
+
+		-- -------------------------------------------------------
+		-- special bullshit for 2P modes
+		-- -------------------------------------------------------
+
 		if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs")
 		and op_state and op_state.cursor and (op_state.cursor == str or op_state.cursor == str) then
 			player_num = 2
@@ -240,6 +280,10 @@ function main_character_select()
 				menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
 			end
 		end
+
+		-- WHAT IS THIS?????????????
+		-- WHY IS THIS "...AND ( A == B or A == B)"
+		-- WHY WOULD YOU DO THIS?????????
 		if my_state and my_state.cursor and (my_state.cursor == str or my_state.cursor == str) then
 			player_num = 1
 			if my_state.ready then
@@ -266,6 +310,11 @@ function main_character_select()
 		end
 		gprint(pstr, render_x+6, render_y+y_add)
 	end
+
+	-- why is that function called draw_button when it has so much fucking logic in it
+	-- what is going on. why would you do this. why. why. whyyyyyyy
+
+	-- what does LOC even MEAN
 	print("got to LOC before net_vs_room character select loop")
 	menu_clock = 0
 	while true do
@@ -392,6 +441,10 @@ function main_character_select()
 				end
 			end
 		end
+
+		-- you could just skip drawing the ranking button
+		-- but also why is it based on the title of the button
+		-- why is any of this a thing
 		if current_server_supports_ranking then
 			draw_button(1,1,4,1,"match type desired")
 			draw_button(1,5,2,1,"level")
@@ -400,11 +453,18 @@ function main_character_select()
 		end
 
 		draw_button(1,7,1,1,"ready")
+
+		-- can someone please explain to me what the purpose of
+		-- "a or a" is here
+		-- like what were you trying to accomplish
+		-- just. why. why. whyyyyyyyyyyyyyYYYYYYYYYYYYYYY
 		for i=2,X do
 			for j=1,Y do
 				draw_button(i,j,1,1,map[i][j] or map[i][j])
 			end
 		end
+
+		-- why is rating calculation just here instead of somewhere useful
 		local my_rating_difference = ""
 		local op_rating_difference = ""
 		if current_server_supports_ranking and not global_current_room_ratings[my_player_number].placement_match_progress then
@@ -424,7 +484,10 @@ function main_character_select()
 			end
 		end
 		local state = ""
-		--my state - add to be displayed
+
+		-- ok so the first thing they do here is add the name.
+		-- if you know that why not just make local state = my_name?
+
 		state = state..my_name
 		if current_server_supports_ranking then
 			state = state..":  Rating: "..(global_current_room_ratings[my_player_number].league or "")
@@ -450,20 +513,22 @@ function main_character_select()
 				..my_expected_win_ratio.."%"
 		end
 		state = state.."  Char: "..my_state.character .."  Ready: "..tostring(my_state.ready or false)
+
+		-- draw 2p stuff here i guess. ok.
 		if op_state and op_name then
 			state = state.."\n"
-			--op state - add to be displayed
 			state = state..op_name
 			if current_server_supports_ranking then
-			state = state..":  Rating: "..(global_current_room_ratings[op_player_number].league or "")
-			if not global_current_room_ratings[op_player_number].placement_match_progress then
-				state = state.." "..op_rating_difference..global_current_room_ratings[op_player_number].new
-			elseif global_current_room_ratings[op_player_number].placement_match_progress
-			and global_current_room_ratings[op_player_number].new
-			and global_current_room_ratings[op_player_number].new == 0 then
-				state = state.." "..global_current_room_ratings[op_player_number].placement_match_progress
+				state = state..":  Rating: "..(global_current_room_ratings[op_player_number].league or "")
+				if not global_current_room_ratings[op_player_number].placement_match_progress then
+					state = state.." "..op_rating_difference..global_current_room_ratings[op_player_number].new
+				elseif global_current_room_ratings[op_player_number].placement_match_progress
+				and global_current_room_ratings[op_player_number].new
+				and global_current_room_ratings[op_player_number].new == 0 then
+					state = state.." "..global_current_room_ratings[op_player_number].placement_match_progress
+				end
 			end
-		end
+
 			state = state.."  Wins: "..op_win_count
 			if current_server_supports_ranking or my_win_count + op_win_count > 0 then
 				state = state.."  Win Ratio:"
@@ -478,7 +543,10 @@ function main_character_select()
 			state = state.."  Char: "..op_state.character.."  Ready: "..tostring(op_state.ready or false)
 			--state = state.." "..json.encode(op_state)
 		end
+
 		gprint(state, 50, 50)
+
+		-- ok more 2p stuff here.
 		if character_select_mode == "2p_net_vs" then
 			if not my_state.ranked and not op_state.ranked then
 				match_type_message = ""
