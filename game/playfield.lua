@@ -349,8 +349,16 @@ end
 
 --foreign_run is for a stack that belongs to another client.
 function Playfield:foreign_run()
-	local times_to_run = math.min(string.len(self.input_buffer),
-			self.max_runs_per_frame)
+	local times_to_run	= 0
+	local buffer_len	= string.len(self.input_buffer)
+	if buffer_len >= 15 then
+		times_to_run	= self.max_runs_per_frame
+	elseif buffer_len >= 10 then
+		times_to_run	= 2
+	elseif buffer_len >= 1 then
+		times_to_run	= 1
+	end
+
 	if self.play_to_end then
 		if string.len(self.input_buffer) < 4 then
 			self.play_to_end = nil
@@ -2083,9 +2091,11 @@ function Playfield:render()
 		if P1 and P1.game_stopwatch and tonumber(P1.game_stopwatch) then
 			gprint(frames_to_time_string(P1.game_stopwatch, P1.mode == "endless"), 385, 25)
 		end
+		--[[
 		if not config.debug_mode then
 			gprint(join_community_msg or "", 330, 560)
 		end
+		--]]
 	end
 	self:draw_cards()
 	self:render_cursor()

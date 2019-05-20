@@ -44,6 +44,15 @@ function main_net_vs()
 		if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
 			P1:render()
 			P2:render()
+
+			-- Display buffer status for both players
+			--[[
+			gprint(string.len(P1.input_buffer), 340, 400)
+			gprint(string.len(P2.input_buffer), 340, 415)
+			grectangle("fill", 360, 400, string.len(P1.input_buffer) * 4, 8)
+			grectangle("fill", 360, 415, string.len(P2.input_buffer) * 4, 8)
+			--]]
+
 			coroutine.yield()
 			if currently_spectating and this_frame_keys["escape"] then
 				print("spectator pressed escape during a game")

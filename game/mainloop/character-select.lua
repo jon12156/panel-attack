@@ -74,14 +74,15 @@ function main_character_select()
 		print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
 		local cursor,op_cursor,X,Y
 		if current_server_supports_ranking then
-			map = {{"match type desired", "match type desired", "match type desired", "match type desired", "level", "level", "ready"},
-						 {"random", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
+			map = {
+					{"match type desired", "match type desired", "match type desired", "level", "level", "leave", "ready"},
+					{"random", "yoshi"},
+				}
 		else
-			map = {{"level", "level", "level", "level", "level", "level", "ready"},
-						 {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
-						 {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
-						 {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
-						 {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
+			map = {
+					{"level", "level", "level", "level", "level", "leave", "ready"},
+					{"random", "yoshi"},
+				}
 		end
 	end
 
@@ -91,11 +92,10 @@ function main_character_select()
 	-- -------------------------------------------------------
 
 	if character_select_mode == "1p_vs_yourself" then
-		map = {{"level", "level", "level", "level", "level", "level", "ready"},
-					 {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
-					 {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
-					 {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
-					 {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
+		map = {
+				{"level", "level", "level", "level", "level", "leave", "ready"},
+				{"random", "yoshi"},
+			}
 	end
 
 
@@ -164,7 +164,7 @@ function main_character_select()
 		local dx,dy = unpack(direction)
 		local can_x,can_y = wrap(1, cursor[1]+dx, X), wrap(1, cursor[2]+dy, Y)
 		while can_x ~= cursor[1] or can_y ~= cursor[2] do
-			if map[can_x][can_y] and map[can_x][can_y] ~= map[cursor[1]][cursor[2]] then
+			if map[can_x] and map[can_x][can_y] and map[can_x][can_y] ~= map[cursor[1]][cursor[2]] then
 				break
 			end
 			can_x,can_y = wrap(1, can_x+dx, X), wrap(1, can_y+dy, Y)
@@ -406,7 +406,7 @@ function main_character_select()
 						to_print = "Joined a match in progress.\nCatching up..."
 					end
 					for i=1,30 do
-						gprint(to_print,300, 280)
+						gprint(to_print .. " - " .. i, 300, 280)
 						do_messages()
 						coroutine.yield()
 					end
@@ -446,12 +446,13 @@ function main_character_select()
 		-- but also why is it based on the title of the button
 		-- why is any of this a thing
 		if current_server_supports_ranking then
-			draw_button(1,1,4,1,"match type desired")
-			draw_button(1,5,2,1,"level")
+			draw_button(1,1,2,1,"match type desired")
+			draw_button(1,3,2,1,"level")
 		else
-			draw_button(1,1,6,1,"level")
+			draw_button(1,1,4,1,"level")
 		end
 
+		draw_button(1,6,1,1,"leave")
 		draw_button(1,7,1,1,"ready")
 
 		-- can someone please explain to me what the purpose of
@@ -460,7 +461,11 @@ function main_character_select()
 		-- just. why. why. whyyyyyyyyyyyyyYYYYYYYYYYYYYYY
 		for i=2,X do
 			for j=1,Y do
-				draw_button(i,j,1,1,map[i][j] or map[i][j])
+				if map[i] and map[i][j] then
+					draw_button(i,j,1,1,map[i][j] or map[i][j])
+				else
+					draw_button(i,j,1,1,"-")
+				end
 			end
 		end
 
