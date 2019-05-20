@@ -586,7 +586,7 @@ local d_row = {up=1, down=-1, left=0, right=0}
 
 -- The engine routine.
 function Stack.PdP(self)
-
+  local pdp_run_start_time = love.timer.getTime()
   local panels = self.panels
   local width = self.width
   local height = self.height
@@ -1404,6 +1404,7 @@ function Stack.PdP(self)
   if self.game_stopwatch_running then
     self.game_stopwatch = (self.game_stopwatch or -1) + 1
   end
+  --print("Stack"..self.which.." engine routine finished in "..round(love.timer.getTime()-pdp_run_start_time, 6).." sec")
 end
 
 function winningPlayer()

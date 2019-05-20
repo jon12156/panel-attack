@@ -231,6 +231,7 @@ end
 
 function Stack.render(self)
   local mx,my
+  local render_start_time = love.timer.getTime()
   if config.debug_mode then
     mx,my = love.mouse.getPosition()
     mx = mx / GFX_SCALE
@@ -452,6 +453,7 @@ function Stack.render(self)
   if self.do_countdown then
     self:render_countdown()
   end
+  --print("Rendered stack "..self.which.." in "..round(love.timer.getTime()-render_start_time, 6))
 end
 
 function scale_letterbox(width, height, w_ratio, h_ratio)

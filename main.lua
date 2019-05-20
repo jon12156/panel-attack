@@ -76,6 +76,7 @@ end
 
 bg = load_img("menu/title.png")
 function love.draw()
+  local draw_start_time = love.timer.getTime()
   -- if not main_font then
     -- main_font = love.graphics.newFont("Oswald-Light.ttf", 15)
   -- end
@@ -91,9 +92,27 @@ function love.draw()
     love.graphics.rectangle("fill",-5,-5,900,900)
     love.graphics.setColor(1, 1, 1)
   end
+  local gfx_unpack_start_time = love.timer.getTime()
+  local sum_gfx_operation_times = 0
+  print("#graphics operations this frame: "..gfx_q:len())
+  local above_threshold1, above_threshold2 = 0,0
   for i=gfx_q.first,gfx_q.last do
+    local gfx_operation_start_time = love.timer.getTime()
     gfx_q[i][1](unpack(gfx_q[i][2]))
+    local this_operation_time = love.timer.getTime()-gfx_operation_start_time
+    --print("gfx operation completed in "..round(this_operation_time, 6).." sec")
+    sum_gfx_operation_times = sum_gfx_operation_times + this_operation_time
+    -- if this_operation_time > 0.00005 then
+      -- above_threshold1 = above_threshold1 + 1
+      -- if this_operation_time > .001 then
+        -- above_threshold2 = above_threshold2 + 1
+      -- end
+    -- end
   end
+  -- print("sum_gfx_operation_times = "..sum_gfx_operation_times)
+  -- print("gfx unpack completed in "..round(love.timer.getTime()-gfx_unpack_start_time, 6).." sec")
+  -- print("#above_threshold1 = "..above_threshold1)
+  -- print("#above_threshold2 = "..above_threshold2)
   gfx_q:clear()
   love.graphics.print("FPS: "..love.timer.getFPS(),315,115) -- TODO: Make this a toggle
   if love.graphics.getSupported("canvas") then
@@ -105,4 +124,6 @@ function love.draw()
     bgw, bgh = bg:getDimensions()
     menu_draw(bg, 0, 0, 0, default_width/bgw, default_height/bgh)
   end
+  print("frame draw completed in "..round(love.timer.getTime()-draw_start_time, 6).." sec\n")
+  
 end
