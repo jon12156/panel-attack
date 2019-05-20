@@ -25,7 +25,8 @@ do
 				{"Configure input", main_config_input},
 				{"Set name", main_set_name},
 				{"Options", main_options},
-				{"Music test", main_music_test}
+				{"Music test", main_music_test},
+				{"Replay Browser", main_replay_browser},
 		}
 		if love.graphics.getSupported("canvas") then
 			items[#items+1] = {"Fullscreen (LAlt+Enter)", fullscreen}

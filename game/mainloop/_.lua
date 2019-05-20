@@ -46,6 +46,16 @@ function variable_step(f)
 	end
 end
 
+
+function just_update_the_god_damn_buttons()
+	this_frame_keys = {}
+	this_frame_unicodes = {}
+	joystick_ax()
+	key_counts()
+end
+
+
+
 -- Changes the behavior of menu_foo functions.
 -- In a menu that doesn't specifically pertain to multiple players,
 -- up, down, left, right should always work.  But in a multiplayer
@@ -134,6 +144,8 @@ require "game.mainloop.puzzle"
 require "game.mainloop.replay-endless"
 require "game.mainloop.replay-puzzle"
 require "game.mainloop.replay-vs"
+
+require "game.mainloop.replay-browser"
 
 
 function update_win_counts(win_counts)
