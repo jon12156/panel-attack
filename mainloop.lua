@@ -3,11 +3,13 @@ local wait, resume = coroutine.yield, coroutine.resume
 local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_replay_endless, main_replay_puzzle, main_net_vs,
   main_config_input, main_dumb_transition, main_select_puzz,
-  menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape, menu_backspace,
-  main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
+  main_replay_vs, main_local_vs_setup, main_local_vs, 
   multi_func, normal_key, main_set_name, main_character_select, main_net_vs_lobby,
   main_local_vs_yourself_setup, main_local_vs_yourself,
   main_options, exit_options_menu, main_music_test
+
+--making the following global so they can be used in replay-browser.lua 
+menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape, menu_backspace,menu_key_func = nil
 
 VERSION = "037"
 local PLAYING = "playing"  -- room states
@@ -27,7 +29,8 @@ danger_music_changeback_delay_text = {[true]="On", [false]="Off"}
 leftover_time = 0
 
 function fmainloop()
-  local func, arg = main_select_mode, nil
+  --
+  func, arg = main_select_mode, nil
   replay = {}
   -- Default configuration values
   config = {
@@ -192,7 +195,8 @@ do
         {"Configure input", main_config_input},
         {"Set name", main_set_name},
         {"Options", main_options},
-        {"Music test", main_music_test}
+        {"Music test", main_music_test},
+        {"Replay Browser", main_replay_browser}
     }
     if love.graphics.getSupported("canvas") then
       items[#items+1] = {"Fullscreen (LAlt+Enter)", fullscreen}
@@ -2380,6 +2384,13 @@ function main_dumb_transition(next_func, text, timemin, timemax)
       return unpack(ret)
     end
   end
+end
+
+function just_update_the_god_damn_buttons()
+  this_frame_keys = {}
+  this_frame_unicodes = {}
+  joystick_ax()
+  key_counts()
 end
 
 function write_char_sel_settings_to_file()

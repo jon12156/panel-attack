@@ -15,6 +15,7 @@ require("consts")
 require("sound")
 require("timezones")
 require("gen_panels")
+require("replay-browser")
 
 local canvas = love.graphics.newCanvas(default_width, default_height)
 
