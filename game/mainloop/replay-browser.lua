@@ -1,5 +1,5 @@
 do
-
+ 
 	local function get_directory_contents(path)
 
 		local path		= (path and path or "")
