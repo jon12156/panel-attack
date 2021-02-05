@@ -6,9 +6,10 @@ require("class")
 require("queue")
 require("globals")
 require("character") -- after globals!
-require("analytics")
+require("stage") -- after globals!
 require("save")
 require("engine")
+require("localization")
 require("graphics")
 require("input")
 require("network")
@@ -52,8 +53,6 @@ function love.update(dt)
     end
   end
 
-
-
   leftover_time = leftover_time + dt
 
   local status, err = coroutine.resume(mainloop)
@@ -62,29 +61,20 @@ function love.update(dt)
   end
   this_frame_messages = {}
 
-  --Play music here
-  for k, v in pairs(music_t) do
-    if v and k - love.timer.getTime() < 0.007 then
-      v.t:stop()
-      v.t:play()
-      currently_playing_tracks[#currently_playing_tracks+1]=v.t
-      -- Manual looping code
-      --if v.l then
-        --music_t[love.timer.getTime() + v.t:getDuration()] = make_music_t(v.t, true)
-      --end
-      music_t[k] = nil
-    end
-  end
+  update_music()
 end
 
-bg = load_img("menu/title.png")
 function love.draw()
   -- if not main_font then
     -- main_font = love.graphics.newFont("Oswald-Light.ttf", 15)
   -- end
   -- main_font:setLineHeight(0.66)
   -- love.graphics.setFont(main_font)
-  love.graphics.getFont():setFilter("nearest", "nearest")
+  if foreground_overlay then
+    local scale = canvas_width/math.max(foreground_overlay:getWidth(),foreground_overlay:getHeight()) -- keep image ratio
+    menu_drawf(foreground_overlay, canvas_width/2, canvas_height/2, "center", "center", 0, scale, scale )
+  end
+
   love.graphics.setBlendMode("alpha", "alphamultiply")
   love.graphics.setCanvas(global_canvas)
   love.graphics.setBackgroundColor(unpack(global_background_color))
@@ -103,6 +93,12 @@ function love.draw()
   x, y, w, h = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
   love.graphics.setBlendMode("alpha","premultiplied")
   love.graphics.draw(global_canvas, x, y, 0, w / canvas_width, h / canvas_height)
-  local scale = canvas_width/math.max(bg:getWidth(),bg:getHeight()) -- keep image ratio
-  menu_drawf(bg, canvas_width/2, canvas_height/2, "center", "center", 0, scale, scale )
+
+  -- draw background and its overlay
+  local scale = canvas_width/math.max(background:getWidth(),background:getHeight()) -- keep image ratio
+  menu_drawf(background, canvas_width/2, canvas_height/2, "center", "center", 0, scale, scale )
+  if background_overlay then
+    local scale = canvas_width/math.max(background_overlay:getWidth(),background_overlay:getHeight()) -- keep image ratio
+    menu_drawf(background_overlay, canvas_width/2, canvas_height/2, "center", "center", 0, scale, scale )
+  end
 end
